@@ -2,7 +2,7 @@ from typing import Final
 
 from inim.prime.native.const import CommandOperation
 from inim.prime.native.models import PartitionStatus
-from inim.prime.native.operations.partitions.const import PARTITION_MODE_MAP, PARTITIONS_MAX_NUMBER
+from inim.prime.native.operations.partitions.const import ARMING_STATUS_MAP, PARTITIONS_MAX_NUMBER
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
 
@@ -31,7 +31,7 @@ def disassemble_data(response_data: bytes) -> dict[int, PartitionStatus]:
 
     for idx, offset in enumerate(
             range(0, Layout.size, Layout.partition_size),
-            start = 1,
+            start = 0,
     ):
         chunk = response_data[offset:offset + Layout.partition_size]
         partition = decode_partition_status(chunk)
@@ -42,7 +42,7 @@ def disassemble_data(response_data: bytes) -> dict[int, PartitionStatus]:
 
 def decode_partition_status(p: bytes) -> PartitionStatus | None:
     ### Byte 1
-    mode = PARTITION_MODE_MAP.get(p[1])
+    mode = ARMING_STATUS_MAP.get(p[1])
 
     if mode is None:
         return None
@@ -52,9 +52,12 @@ def decode_partition_status(p: bytes) -> PartitionStatus | None:
     has_alarm = bool(p[2] & ALARM_MASK)
 
     return PartitionStatus(
-        partition_mode = mode,
+        arming_status = mode,
         alarm = has_alarm,
         alarm_memory = has_alarm,
+        sabotage = None,
+        sabotage_memory = None,
+        raw = p,
     )
 
 

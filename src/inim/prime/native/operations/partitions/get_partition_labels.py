@@ -14,6 +14,6 @@ async def get_partition_labels(protocol: Protocol) -> dict[int, str]:
 
         if partition_labels_bytes != bytes(Memory.LABEL_SIZE):
             partition_label = partition_labels_bytes.decode("ascii").rstrip()
-            partition_labels[index + 1] = partition_label
+            partition_labels[index] = partition_label
 
     return partition_labels

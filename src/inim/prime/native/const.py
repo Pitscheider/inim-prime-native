@@ -19,7 +19,7 @@ class EncodingSizes:
 
 
 class CommandOperation(IntEnum):
-    SET_PARTITION_MODES = 3
+    SET_ARMING_STATUS = 3
     GET_PARTITION_STATUSES = 6
     GET_TERMINAL_STATUSES = 7
     SET_ZONE_BYPASS = 9

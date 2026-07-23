@@ -12,8 +12,7 @@ async def get_terminals_by_intervals(
         protocol: Protocol,
         intervals: list[Interval],
         pin: str | None = None,
-) -> list[Terminal]:
-    terminals: list[Terminal] = []
+) -> dict[int, Terminal]:
 
     terminal_labels, terminal_statuses, terminal_settings = await asyncio.gather(
         get_terminal_labels_by_intervals(protocol, intervals),
@@ -21,17 +20,16 @@ async def get_terminals_by_intervals(
         get_terminal_settings_by_intervals(protocol, intervals),
     )
 
-    for idx, t_label in terminal_labels.items():
-        t_status = terminal_statuses.get(idx)
-        t_setting = terminal_settings.get(idx)
-        terminals.append(Terminal(
+    return {
+        idx: Terminal(
             id = idx,
-            label = t_label,
-            terminal_status = t_status,
-            setting = t_setting
-        ))
+            label = label,
+            terminal_status = terminal_statuses.get(idx),
+            setting = terminal_settings.get(idx),
+        )
+        for idx, label in terminal_labels.items()
+    }
 
-    return terminals
 
 async def get_terminal_statuses_by_intervals(
     protocol: Protocol,
@@ -99,13 +97,15 @@ async def get_active_terminal_intervals(
 
 async def update_terminal_statuses_by_intervals(
     protocol: Protocol,
-    terminals: list[Terminal],
+    terminals: dict[int, Terminal],
     intervals: list[Interval],
     pin: str | None = None,
-) -> list[Terminal]:
-    terminal_statuses = await get_terminal_statuses_by_intervals(protocol, intervals, pin)
+) -> dict[int, Terminal]:
+    terminal_statuses = await get_terminal_statuses_by_intervals(
+        protocol, intervals, pin
+    )
 
-    for t in terminals:
-        t.terminal_status = terminal_statuses.get(t.id)
+    for terminal in terminals.values():
+        terminal.terminal_status = terminal_statuses.get(terminal.id)
 
     return terminals

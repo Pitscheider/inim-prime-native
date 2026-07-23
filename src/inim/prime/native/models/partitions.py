@@ -2,30 +2,21 @@ from dataclasses import dataclass
 from enum import IntEnum
 
 
-class PartitionMode(IntEnum):
-    TOTAL = 1
-    PARTIAL = 2
-    INSTANT = 3
+class ArmingStatus(IntEnum):
+    ARM_AWAY = 1
+    ARM_STAY = 2
+    ARM_INSTANT = 3
     DISARMED = 4
 
 
 @dataclass(frozen = True)
 class PartitionStatus:
-    partition_mode: PartitionMode
-    alarm: bool = False
-    alarm_memory: bool = False
-    sabotage: bool = False
-    sabotage_memory: bool = False
-
-    def __str__(self) -> str:
-        return (
-            f"PartitionStatus("
-            f"mode={self.partition_mode.name}, "
-            f"alarm={self.alarm}, "
-            f"alarm_memory={self.alarm_memory}, "
-            f"sabotage={self.sabotage}, "
-            f"sabotage_memory={self.sabotage_memory})"
-        )
+    arming_status: ArmingStatus
+    alarm: bool
+    alarm_memory: bool
+    sabotage: bool | None
+    sabotage_memory: bool | None
+    raw: bytes
 
 
 @dataclass
@@ -33,3 +24,15 @@ class Partition:
     id: int
     label: str
     status: PartitionStatus | None
+
+    def __str__(self) -> str:
+
+        return (
+                f"ID={self.id} - {self.label}"
+                f"\n\tArming status: {self.status.arming_status.name}"
+                f"\n\tAlarm: {self.status.alarm}"
+                f"\n\tAlarm memory: {self.status.alarm_memory}"
+                f"\n\tSabotage: {self.status.sabotage}"
+                f"\n\tSabotage memory: {self.status.sabotage_memory}"
+                f"\n\tRaw status: {self.status.raw.hex(" ")}"
+        )

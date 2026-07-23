@@ -1,4 +1,4 @@
 from .get_partition_statuses import get_partition_statuses
 from .get_partition_labels import get_partition_labels
 from .reset_partitions import reset_partitions
-from .set_partition_modes import set_partition_modes
+from .set_partition_arming_statuses import set_partition_arming_statuses

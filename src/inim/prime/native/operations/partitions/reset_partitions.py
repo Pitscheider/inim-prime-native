@@ -2,6 +2,7 @@ from typing import Final
 
 from inim.prime.native.const import Encoding, CommandOperation
 from inim.prime.native.operations.partitions.const import PARTITIONS_MAX_NUMBER
+from inim.prime.native.operations.partitions.utils import validate_partition_id
 from inim.prime.native.utils import encode_int
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
@@ -14,9 +15,8 @@ COMMAND_OPERATION: Final[CommandOperation] = CommandOperation.RESET_PARTITIONS
 def assemble_data(partition_ids: set[int]) -> bytes:
     partitions_to_reset_int = 0
     for idx in partition_ids:
-        if idx < 1 or idx > PARTITIONS_MAX_NUMBER:
-            raise IndexError(f'Partition id {idx} out of range')
-        partitions_to_reset_int += 2 ** (idx - 1)
+        validate_partition_id(idx)
+        partitions_to_reset_int += 2 ** idx
 
     command_data = encode_int(partitions_to_reset_int, Encoding.UINT32_LE)
 

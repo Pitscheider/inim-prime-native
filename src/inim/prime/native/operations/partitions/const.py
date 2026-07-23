@@ -1,16 +1,16 @@
 from typing import Final
 
-from inim.prime.native.models import PartitionMode
+from inim.prime.native.models import ArmingStatus
 
 PARTITIONS_MAX_NUMBER: Final[int] = 30
 
-PARTITION_MODE_MAP = {
-    0x01: PartitionMode.TOTAL,
-    0x02: PartitionMode.PARTIAL,
-    0x03: PartitionMode.INSTANT,
-    0x04: PartitionMode.DISARMED,
+ARMING_STATUS_MAP = {
+    0x01: ArmingStatus.ARM_AWAY,
+    0x02: ArmingStatus.ARM_STAY,
+    0x03: ArmingStatus.ARM_INSTANT,
+    0x04: ArmingStatus.DISARMED,
 }
 
-PARTITION_MODE_REVERSE_MAP = {
-    value: key for key, value in PARTITION_MODE_MAP.items()
+ARMING_STATUS_REVERSE_MAP = {
+    value: key for key, value in ARMING_STATUS_MAP.items()
 }

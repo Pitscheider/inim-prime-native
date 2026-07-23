@@ -1,1 +1,1 @@
-from .partitions import PartitionMode, PartitionStatus
+from .partitions import ArmingStatus, PartitionStatus

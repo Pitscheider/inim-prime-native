@@ -36,23 +36,25 @@ def _decode_zone_state(
     except ValueError:
         return None
 
-def terminals_to_zones(
-        terminals: list[Terminal],
-) -> list[Zone]:
-    zones: list[Zone] = []
 
-    for t in terminals:
+def terminals_to_zones(
+    terminals: dict[int, Terminal],
+) -> dict[int, Zone]:
+    zones: dict[int, Zone] = {}
+
+    for terminal_id, t in terminals.items():
         status = None
+
         if t.terminal_status is not None:
             state = _decode_zone_state(t.terminal_status.raw)
             bypass = _decode_zone_bypass(t.terminal_status.raw)
 
             status = ZoneStatus(
-                state = state,
-                bypass = bypass,
+                state=state,
+                bypass=bypass,
             )
 
-        zones.append(Zone.from_terminal(t, status))
+        zones[terminal_id] = Zone.from_terminal(t, status)
 
     return zones
 
@@ -60,17 +62,17 @@ async def get_zones_by_intervals(
         protocol: Protocol,
         intervals: list[Interval],
         pin: str | None = None,
-) -> list[Zone]:
+) -> dict[int, Zone]:
     terminals = await get_terminals_by_intervals(protocol, intervals, pin)
     return terminals_to_zones(terminals)
 
 
 async def update_zone_statuses_by_intervals(
         protocol: Protocol,
-        zones: list[Zone],
+        zones: dict[int, Zone],
         intervals: list[Interval],
         pin: str | None = None,
-) -> list[Zone]:
+) -> dict[int, Zone]:
     updated_terminals = await update_terminal_statuses_by_intervals(protocol, zones, intervals, pin)
     updated_zones = terminals_to_zones(updated_terminals)
     return updated_zones

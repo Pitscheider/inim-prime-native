@@ -7,34 +7,31 @@ from inim.prime.native.wire import Protocol
 
 
 async def get_partitions(
-        protocol: Protocol,
-        pin: str | None = None,
-) -> list[Partition]:
-    partitions: list[Partition] = []
-
+    protocol: Protocol,
+    pin: str | None = None,
+) -> dict[int, Partition]:
     partition_labels, partition_statuses = await asyncio.gather(
         get_partition_labels(protocol),
         get_partition_statuses(protocol, pin),
     )
 
-    for idx, p_label in partition_labels.items():
-        partitions.append(Partition(
-            id = idx,
-            label = p_label,
-            status = partition_statuses.get(idx),
-        ))
-
-    return partitions
-
+    return {
+        idx: Partition(
+            id=idx,
+            label=label,
+            status=partition_statuses.get(idx),
+        )
+        for idx, label in partition_labels.items()
+    }
 
 async def update_partition_statuses(
-        protocol: Protocol,
-        partitions: list[Partition],
-        pin: str | None = None,
-) -> list[Partition]:
+    protocol: Protocol,
+    partitions: dict[int, Partition],
+    pin: str | None = None,
+) -> dict[int, Partition]:
     partition_statuses = await get_partition_statuses(protocol, pin)
 
-    for p in partitions:
-        p.status = partition_statuses.get(p.id)
+    for partition_id, partition in partitions.items():
+        partition.status = partition_statuses.get(partition_id)
 
     return partitions
