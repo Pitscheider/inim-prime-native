@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import struct
+from dataclasses import dataclass
 from functools import singledispatch
 
 from inim.prime.native.const import CRC16_TABLE, Encoding
@@ -88,3 +89,32 @@ def crc16_arc(
         crc = high_byte ^ table_value
 
     return crc & 0xFFFF
+
+@dataclass(frozen=True, slots=True)
+class Interval:
+    start: int
+    end: int  # inclusive
+
+from dataclasses import dataclass
+
+@dataclass(frozen=True, slots=True)
+class Interval:
+    start: int
+    end: int  # inclusive
+
+
+def truncate_intervals(
+    intervals: list[Interval],
+    min_start: int,
+    max_end: int,
+) -> list[Interval]:
+    result = []
+
+    for interval in intervals:
+        start = max(interval.start, min_start)
+        end = min(interval.end, max_end)
+
+        if start <= end:  # still contains at least one value
+            result.append(Interval(start, end))
+
+    return result

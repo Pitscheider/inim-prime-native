@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum, StrEnum
+from enum import Enum, StrEnum, IntEnum
 from typing import Final
 
 
@@ -18,13 +18,24 @@ class EncodingSizes:
     UINT64_LE_SIZE: Final[int] = 8
 
 
-class CommandOperation(Enum):
+class CommandOperation(IntEnum):
     SET_PARTITION_MODES = 3
     GET_PARTITION_STATUSES = 6
     GET_TERMINAL_STATUSES = 7
+    SET_ZONE_BYPASS = 9
     RESET_PARTITIONS = 16
     GET_PANEL_INFO = 23
 
+class Address(IntEnum):
+    GET_TERMINAL_SETTINGS = 336016404
+    GET_PARTITION_LABELS = 335744288
+    GET_TERMINAL_LABELS = 335744768
+
+class AddressTable:
+    ENTRY_SIZE: Final[int] = 4
+
+    GET_PARTITION_LABELS: Final[int] = 436216852
+    GET_TERMINAL_LABELS: Final[int] = 436216856
 
 class Panel:
     DEFAULT_PORT: Final[int] = 6004
@@ -33,11 +44,7 @@ class Panel:
     DEFAULT_MASTER_PIN: bytes = b"\x74\x00\x00\x00\x00\x00"
 
 
-class AddressTable:
-    ENTRY_SIZE: Final[int] = 4
 
-    GET_PARTITION_LABELS: Final[int] = 436216852
-    GET_TERMINAL_LABELS: Final[int] = 436216856
 
 class Memory:
     LABEL_SIZE: Final[int] = 16

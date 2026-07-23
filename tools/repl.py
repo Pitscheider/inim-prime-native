@@ -1,6 +1,5 @@
 import asyncio
 
-from inim.prime.native.operations.terminals.const import TerminalType
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire import Cipher
 from inim.prime.native import operations, helpers
@@ -30,7 +29,6 @@ Commands:
   get_partitions            - Print partitions statuses
   set_partition_modes
   get_panel_info
-  get_terminal_labels
   exit / quit               – Exit the program
 """
 
@@ -105,7 +103,7 @@ async def resolve_address(protocol: Protocol):
 
     print(f"Resolved address: {response_address} ({hex(response_address)})")
 
-async def get_partition_names(protocol: Protocol):
+async def get_partition_labels(protocol: Protocol):
     await protocol.connect()
     partition_names = await operations.get_partition_labels(protocol)
     protocol.disconnect()
@@ -224,17 +222,7 @@ async def get_panel_info(protocol: Protocol):
 
     protocol.disconnect()
 
-async def get_terminal_labels(protocol: Protocol):
-    await protocol.connect()
 
-    for t in TerminalType:
-        t_labels = await operations.terminals.get_terminal_labels(protocol, t)
-        print(f"{t.value}:")
-        for idx, l in t_labels.items():
-            print(f"{idx} - {l}")
-        print()
-
-    protocol.disconnect()
 
 # ---------------------------------------------------------------------------
 # REPL
@@ -310,8 +298,8 @@ async def repl(config: Config) -> None:
                     filtered_packets = packets
                     active_filter = None
                     print("Filter cleared.")
-        elif choice == "get_partition_names":
-            await get_partition_names(protocol)
+        elif choice == "get_partition_labels":
+            await get_partition_labels(protocol)
         elif choice == "get_partition_statuses":
             await get_partition_statuses(protocol)
         elif choice == "get_partitions":
@@ -320,8 +308,7 @@ async def repl(config: Config) -> None:
             await set_partition_modes(protocol, config.pin)
         elif choice == "get_panel_info":
             await get_panel_info(protocol)
-        elif choice == "get_terminal_labels":
-            await get_terminal_labels(protocol)
+
         else:
             print(f"Unknown command '{choice}'. Type 'help' for a list of commands.")
 

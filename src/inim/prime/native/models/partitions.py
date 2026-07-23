@@ -31,5 +31,5 @@ class PartitionStatus:
 @dataclass
 class Partition:
     id: int
-    name: str
+    label: str
     status: PartitionStatus | None

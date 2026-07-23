@@ -43,4 +43,6 @@ def _build_terminal_layout() -> dict[TerminalType, slice]:
         previous = t
     return layout
 
+LAST_TERMINAL_ID: Final[int] = sum(TERMINALS_MAX_NUMBER.values()) - 1
+
 TERMINAL_LAYOUT: Final[dict[TerminalType, slice]] = _build_terminal_layout()

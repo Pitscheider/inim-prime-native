@@ -1,7 +1,10 @@
 from typing import Final
 
 from inim.prime.native.const import Encoding, CommandOperation
-from inim.prime.native.utils import encode_int
+from inim.prime.native.models.terminals import TerminalStatus
+from inim.prime.native.operations.terminals.const import LAST_TERMINAL_ID
+from inim.prime.native.operations.terminals.utils import validate_terminals_interval
+from inim.prime.native.utils import encode_int, Interval
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
 
@@ -25,15 +28,23 @@ def assemble_payload(start_terminal: int, end_terminal: int, pin: str | None = N
         data = assemble_data(start_terminal, end_terminal),
     )
 
-def disassemble_payload(start_terminal: int, end_terminal: int, response_data: bytes) -> dict[int, bytes]:
-    terminal_statuses: dict[int, bytes] = {}
+
+
+def disassemble_payload(start_terminal: int, end_terminal: int, response_data: bytes) -> dict[int, TerminalStatus]:
+    terminal_statuses: dict[int, TerminalStatus] = {}
 
     for idx, t_id in enumerate(
             range(start_terminal, end_terminal, 1),
             start = 0,
     ):
         offset = idx * TERMINAL_STATUS_SIZE
-        terminal_statuses[t_id] = response_data[offset:offset + TERMINAL_STATUS_SIZE]
+        raw_status = response_data[offset:offset + TERMINAL_STATUS_SIZE]
+
+        terminal_statuses[t_id] = TerminalStatus(
+            raw = raw_status,
+            active = raw_status[0] == 0x00,
+        )
+
 
     return terminal_statuses
 
@@ -42,7 +53,7 @@ async def get_chunk(
     start_terminal: int,
     end_terminal: int,
     pin: str | None = None,
-) -> dict[int, bytes]:
+) -> dict[int, TerminalStatus]:
 
 
     response = await protocol.execute_command_with_pin(
@@ -56,15 +67,31 @@ async def get_chunk(
 async def get_chunks(
     protocol: Protocol,
     start_terminal: int,
-    end_terminal: int,
+    end_terminal_ex: int,
     pin: str | None = None,
-) -> dict[int, bytes]:
+) -> dict[int, TerminalStatus]:
 
-    chunks: dict[int, bytes] = {}
+    chunks: dict[int, TerminalStatus] = {}
 
-    for start_i in range(start_terminal, end_terminal, MAX_CHUNK_TERMINALS):
-        end_i = min(start_i + MAX_CHUNK_TERMINALS, end_terminal)
+    for start_i in range(start_terminal, end_terminal_ex, MAX_CHUNK_TERMINALS):
+        end_i = min(start_i + MAX_CHUNK_TERMINALS, end_terminal_ex)
 
         chunks |= await get_chunk(protocol, start_i, end_i, pin)
+
+    return chunks
+
+async def get_terminal_statuses_by_interval(
+        protocol: Protocol,
+        interval: Interval = Interval(0, LAST_TERMINAL_ID),
+        pin: str | None = None,
+) -> dict[int, TerminalStatus]:
+    validate_terminals_interval(interval)
+
+    chunks = await get_chunks(
+        protocol = protocol,
+        start_terminal = interval.start,
+        end_terminal_ex = interval.end + 1,
+        pin = pin,
+    )
 
     return chunks

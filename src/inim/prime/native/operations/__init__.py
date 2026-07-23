@@ -6,10 +6,6 @@ from .partitions import (
     reset_partitions,
 )
 
-from .terminals import (
-    get_terminal_labels,
-    get_terminal_statuses,
-)
 
 from .panel import (
     get_panel_info,
