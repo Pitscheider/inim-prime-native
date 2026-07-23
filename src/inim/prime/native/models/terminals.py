@@ -1,16 +1,5 @@
 from dataclasses import dataclass
 
-from inim.prime.native.operations.terminals.const import TerminalType
-
-
-@dataclass
-class Terminal:
-    id: int
-    label: str
-    terminal_status: TerminalStatus | None
-    setting: TerminalSetting | None
-
-
 @dataclass(frozen = True)
 class TerminalStatus:
     raw: bytes
@@ -28,3 +17,10 @@ class TerminalStatus:
 class TerminalSetting:
     raw: bytes
     partitions: frozenset[int]
+
+@dataclass
+class Terminal:
+    id: int
+    label: str
+    terminal_status: TerminalStatus | None
+    setting: TerminalSetting | None

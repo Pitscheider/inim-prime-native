@@ -1,5 +1,4 @@
 import asyncio
-from typing import FrozenSet
 
 from inim.prime.native.models.terminals import Terminal, TerminalStatus, TerminalSetting
 from inim.prime.native.operations.terminals.get_terminal_labels import get_terminal_labels_by_interval
