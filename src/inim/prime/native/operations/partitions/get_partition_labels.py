@@ -1,19 +1,13 @@
 from inim.prime.native.const import Memory, Address
-from inim.prime.native.operations.partitions.const import PARTITIONS_MAX_NUMBER
+from inim.prime.native.operations.base import get_labels
+from inim.prime.native.operations.partitions.const import PARTITIONS_MAX_NUMBER, LAST_PARTITION_ID
+from inim.prime.native.utils import Interval
 from inim.prime.native.wire import Protocol
 
 
-async def get_partition_labels(protocol: Protocol) -> dict[int, str]:
+async def get_partition_labels(
+        protocol: Protocol,
+        interval: Interval = Interval(0, LAST_PARTITION_ID),
+) -> dict[int, str]:
+    return await get_labels(protocol, interval, Address.PARTITION_LABELS)
 
-    response = await protocol.read_memory(Address.GET_PARTITION_LABELS, PARTITIONS_MAX_NUMBER * Memory.LABEL_SIZE)
-
-    partition_labels: dict[int, str] = {}
-
-    for index in range(PARTITIONS_MAX_NUMBER):
-        partition_labels_bytes = response[index * Memory.LABEL_SIZE:(index + 1) * Memory.LABEL_SIZE]
-
-        if partition_labels_bytes != bytes(Memory.LABEL_SIZE):
-            partition_label = partition_labels_bytes.decode("ascii").rstrip()
-            partition_labels[index] = partition_label
-
-    return partition_labels

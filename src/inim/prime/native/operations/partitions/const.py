@@ -3,6 +3,7 @@ from typing import Final
 from inim.prime.native.models import ArmingStatus
 
 PARTITIONS_MAX_NUMBER: Final[int] = 30
+LAST_PARTITION_ID: Final[int] = PARTITIONS_MAX_NUMBER - 1
 
 ARMING_STATUS_MAP = {
     0x01: ArmingStatus.ARM_AWAY,

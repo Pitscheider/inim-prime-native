@@ -1,0 +1,4 @@
+from typing import Final
+
+OUTPUT_SCENARIOS_MAX_NUMBER: Final[int] = 50
+LAST_OUTPUT_SCENARIO_ID: Final[int] = OUTPUT_SCENARIOS_MAX_NUMBER - 1

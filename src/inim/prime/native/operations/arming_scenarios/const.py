@@ -1,0 +1,4 @@
+from typing import Final
+
+ARMING_SCENARIOS_MAX_NUMBER: Final[int] = 50
+LAST_ARMING_SCENARIO_ID: Final[int] = ARMING_SCENARIOS_MAX_NUMBER - 1

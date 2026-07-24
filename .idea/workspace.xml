@@ -4,7 +4,40 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0c904636-8b4a-4c5f-878c-ed2f9cba7311" name="Changes" comment="Added REPL operations" />
+    <list default="true" id="0c904636-8b4a-4c5f-878c-ed2f9cba7311" name="Changes" comment="Fixed order declearation for terminals">
+      <change afterPath="$PROJECT_DIR$/src/inim/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/helpers/outputs.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/models/outputs.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/arming_scenarios/const.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/arming_scenarios/get_arming_scenario_labels.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/output_scenarios/const.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/output_scenarios/get_output_scenario_labels.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/outputs/set_output_status.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/const.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/helpers/partitions.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/helpers/partitions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/helpers/terminals.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/helpers/terminals.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/helpers/zones.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/helpers/zones.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/partitions.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/partitions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/terminals.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/terminals.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/zones.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/zones.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/const.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/get_partition_labels.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/get_partition_labels.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/reset_partitions.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/reset_partitions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/set_partition_arming_statuses.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/set_partition_arming_statuses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/utils.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/const.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/get_terminal_labels.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/get_terminal_labels.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/get_terminal_settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/get_zone_settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/get_terminal_statuses.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/get_terminal_statuses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/utils.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/set_zone_bypass.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/set_zone_bypass.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/repl.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/repl.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -47,6 +80,7 @@
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.partitions.executor": "Run",
     "Python.repl.executor": "Run",
     "Python.terminals.executor": "Run",
     "Python.test.executor": "Run",
@@ -72,6 +106,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/inim/prime/native/operations/zones" />
       <recent name="$PROJECT_DIR$/data/captures" />
       <recent name="$PROJECT_DIR$/src/inim/prime/native/operations/terminals" />
       <recent name="$PROJECT_DIR$/src/inim/prime/native/operations" />
@@ -453,6 +488,9 @@
       <workItem from="1779991179174" duration="2273000" />
       <workItem from="1784720169464" duration="12780000" />
       <workItem from="1784793077933" duration="23541000" />
+      <workItem from="1784835638220" duration="162000" />
+      <workItem from="1784879778807" duration="11537000" />
+      <workItem from="1784894620505" duration="8614000" />
     </task>
     <task id="LOCAL-00001" summary="Refactor">
       <option name="closed" value="true" />
@@ -630,11 +668,30 @@
       <option name="project" value="LOCAL" />
       <updated>1784818362363</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="Fixed order declearation for terminals">
+      <option name="closed" value="true" />
+      <created>1784835722326</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1784835722326</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Refactor" />
@@ -651,12 +708,14 @@
     <MESSAGE value="Major refactor and improved structure for operations" />
     <MESSAGE value="Added Zones operations" />
     <MESSAGE value="Added REPL operations" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added REPL operations" />
+    <MESSAGE value="Fixed order declearation for terminals" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fixed order declearation for terminals" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/inim_prime_native$partitions.coverage" NAME="partitions Coverage Results" MODIFIED="1784899381119" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
     <SUITE FILE_PATH="coverage/inim_prime_native$zones.coverage" NAME="zones Coverage Results" MODIFIED="1784811105932" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
-    <SUITE FILE_PATH="coverage/inim_prime_native$test.coverage" NAME="test Coverage Results" MODIFIED="1784816776973" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/local" />
-    <SUITE FILE_PATH="coverage/inim_prime_native$repl.coverage" NAME="repl Coverage Results" MODIFIED="1784818317078" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
+    <SUITE FILE_PATH="coverage/inim_prime_native$test.coverage" NAME="test Coverage Results" MODIFIED="1784902773684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/local" />
+    <SUITE FILE_PATH="coverage/inim_prime_native$repl.coverage" NAME="repl Coverage Results" MODIFIED="1784903316285" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
     <SUITE FILE_PATH="coverage/inim_prime_native$terminals.coverage" NAME="terminals Coverage Results" MODIFIED="1784729328171" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
   </component>
 </project>

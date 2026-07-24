@@ -1,10 +1,12 @@
+from typing import Final
+
 from inim.prime.native.const import Encoding, CommandOperation
 from inim.prime.native.utils import encode_int
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
 
-BYPASS_VALUE = 0
-UNBYPASS_VALUE = 2
+BYPASS_VALUE: Final[int] = 0
+UNBYPASS_VALUE: Final[int] = 2
 
 def assemble_data(
         zone_id: int,

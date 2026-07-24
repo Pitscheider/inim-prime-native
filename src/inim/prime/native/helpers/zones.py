@@ -1,9 +1,9 @@
 from inim.prime.native.const import Encoding
 from inim.prime.native.helpers.terminals import get_terminals_by_intervals, update_terminal_statuses_by_intervals
-from inim.prime.native.models.terminals import TerminalStatus, Terminal
-from inim.prime.native.models.zones import Zone, ZoneState, ZoneStatus
-from inim.prime.native.operations.terminals.const import TERMINAL_LAYOUT, TerminalType
-from inim.prime.native.utils import Interval, truncate_intervals, decode_int
+from inim.prime.native.models.terminals import Terminal
+from inim.prime.native.models.zones import Zone, ZoneState, ZoneStatus, ZoneSetting
+from inim.prime.native.operations.zones.get_zone_settings import get_zone_settings
+from inim.prime.native.utils import Interval, decode_int
 from inim.prime.native.wire import Protocol
 
 '''
@@ -11,15 +11,6 @@ from inim.prime.native.wire import Protocol
 [4:5] Zone State (1 standby, 2 alarm)
 [2:3] Exclusion Status (x08 not bypassed, x18 bypassed) (Not sure about other values) (maybe is a multiple flag value, so i consider only bit 4)
 '''
-
-def get_zones_intervals(
-        intervals: list[Interval],
-) -> list[Interval]:
-    return truncate_intervals(
-        intervals,
-        min_start = TERMINAL_LAYOUT[TerminalType.PANEL].start,
-        max_end = TERMINAL_LAYOUT[TerminalType.EXPANSION].stop - 1,
-    )
 
 def _decode_zone_bypass(
         raw_bytes: bytes,
@@ -36,25 +27,37 @@ def _decode_zone_state(
     except ValueError:
         return None
 
+def get_partition_ids_from_zones(
+        zones: dict[int, Zone],
+) -> set[int]:
+    return set().union(
+        *(zone.zone_setting.partitions for zone in zones.values()
+          if zone.zone_setting is not None)
+    )
 
 def terminals_to_zones(
     terminals: dict[int, Terminal],
+    zone_settings: dict[int, ZoneSetting],
 ) -> dict[int, Zone]:
     zones: dict[int, Zone] = {}
 
     for terminal_id, t in terminals.items():
-        status = None
+        zone_status = None
 
         if t.terminal_status is not None:
             state = _decode_zone_state(t.terminal_status.raw)
             bypass = _decode_zone_bypass(t.terminal_status.raw)
 
-            status = ZoneStatus(
+            zone_status = ZoneStatus(
                 state=state,
                 bypass=bypass,
             )
 
-        zones[terminal_id] = Zone.from_terminal(t, status)
+        zones[terminal_id] = Zone.from_terminal(
+            terminal = t,
+            zone_status = zone_status,
+            zone_setting = zone_settings.get(terminal_id),
+        )
 
     return zones
 
@@ -64,7 +67,9 @@ async def get_zones_by_intervals(
         pin: str | None = None,
 ) -> dict[int, Zone]:
     terminals = await get_terminals_by_intervals(protocol, intervals, pin)
-    return terminals_to_zones(terminals)
+    zone_settings = await get_zone_settings_by_intervals(protocol, intervals)
+    return terminals_to_zones(terminals, zone_settings)
+
 
 
 async def update_zone_statuses_by_intervals(
@@ -73,6 +78,29 @@ async def update_zone_statuses_by_intervals(
         intervals: list[Interval],
         pin: str | None = None,
 ) -> dict[int, Zone]:
-    updated_terminals = await update_terminal_statuses_by_intervals(protocol, zones, intervals, pin)
-    updated_zones = terminals_to_zones(updated_terminals)
-    return updated_zones
+    zones = await update_terminal_statuses_by_intervals(protocol, zones, intervals, pin)
+    for zone in zones.values():
+        zone_status = None
+
+        if zone.terminal_status is not None:
+            state = _decode_zone_state(zone.terminal_status.raw)
+            bypass = _decode_zone_bypass(zone.terminal_status.raw)
+
+            zone_status = ZoneStatus(
+                state = state,
+                bypass = bypass,
+            )
+        zone.zone_status = zone_status
+    return zones
+
+
+async def get_zone_settings_by_intervals(
+        protocol: Protocol,
+        intervals: list[Interval],
+) -> dict[int, ZoneSetting]:
+    zone_settings: dict[int, ZoneSetting] = {}
+
+    for interval in intervals:
+        zone_settings |= await get_zone_settings(protocol, interval)
+
+    return zone_settings

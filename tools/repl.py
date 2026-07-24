@@ -1,7 +1,9 @@
 import asyncio
 
-from inim.prime.native.helpers.terminals import get_active_terminal_intervals
-from inim.prime.native.helpers.zones import get_zones_intervals, get_zones_by_intervals
+from inim.prime.native.helpers.outputs import get_outputs_by_intervals
+from inim.prime.native.helpers.terminals import get_terminals_intervals_by_state
+from inim.prime.native.helpers.zones import get_zones_by_intervals, get_partition_ids_from_zones
+from inim.prime.native.models.terminals import TerminalState
 from inim.prime.native.utils import Interval
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire import Cipher
@@ -11,6 +13,7 @@ from inim.prime.native.wire.frame import Frame, OuterFrame, InnerFrame
 from inim.prime.native.helpers.partitions import get_partitions as get_partitions_op
 from inim.prime.native.operations.partitions.reset_partitions import reset_partitions as reset_partitions_op
 from inim.prime.native.operations.zones.set_zone_bypass import set_zone_bypass as set_zone_bypass_op
+from inim.prime.native.operations.outputs.set_output_status import set_output_status as set_output_status_op
 from tools.filters import PacketFilter
 from tools.packets import Packet, load_packets, decrypt_packets
 from tools.utils import Config, get_yaml_config
@@ -34,6 +37,8 @@ Commands:
   set_partition_arming_statuses - Set the arming status for partitions
   set_zone_bypass               - Set bypass status for a zone
   reset_partition_memory        - Reset partition memory
+  get_outputs                   - Get output with status
+  set_output_status             - Set output status
   get_panel_info                - Print panel info
   exit / quit                   – Exit the program
 """
@@ -111,16 +116,16 @@ async def resolve_address(protocol: Protocol):
 
 
 
-async def get_partitions(protocol: Protocol):
+async def get_partitions(protocol: Protocol, partition_ids: set[int]):
     await protocol.connect()
-    partitions = await helpers.get_partitions(protocol)
+    partitions = await helpers.get_partitions(protocol, partition_ids)
     protocol.disconnect()
 
     for p in partitions.values():
         print(p)
     print()
 
-async def set_arming_statuses(protocol: Protocol, pin: str | None):
+async def set_arming_statuses(protocol: Protocol, pin: str | None, partition_ids: set[int]):
     await protocol.connect()
     arming_statuses: dict[int, ArmingStatus] = {}
 
@@ -165,7 +170,7 @@ async def set_arming_statuses(protocol: Protocol, pin: str | None):
     else:
         await operations.set_partition_arming_statuses(protocol, arming_statuses)
     await asyncio.sleep(1)
-    await get_partitions(protocol)
+    await get_partitions(protocol, partition_ids)
     protocol.disconnect()
 
 
@@ -174,7 +179,7 @@ async def reset_partitions(protocol: Protocol, pin: str):
 
     partition_ids: set[int] = set()
 
-    print("Enter partition ids to reset.")
+    print("Enter partition values to reset.")
     print("Type 'q' at any prompt to finish.\n")
 
     while True:
@@ -211,12 +216,22 @@ async def get_panel_info(protocol: Protocol):
     protocol.disconnect()
 
 
-async def get_zones(protocol: Protocol, active_zone_intervals: list[Interval]):
+async def get_zones(protocol: Protocol, active_zone_intervals: list[Interval], partition_ids: set[int]):
     await protocol.connect()
     zones = await get_zones_by_intervals(protocol, active_zone_intervals)
-    partitions = await get_partitions_op(protocol)
+    partitions = await get_partitions_op(protocol, partition_ids)
     for zone in zones.values():
         print(zone.to_string_partition_labels(partitions))
+    # for zone in zones.values():
+    #     print(zone)
+    print()
+    protocol.disconnect()
+
+async def get_outputs(protocol: Protocol, outputs_intervals: list[Interval]):
+    await protocol.connect()
+    outputs = await get_outputs_by_intervals(protocol, outputs_intervals)
+    for output in outputs.values():
+        print(output)
     print()
     protocol.disconnect()
 
@@ -239,9 +254,42 @@ async def rest_partition(protocol: Protocol):
     await reset_partitions_op(protocol, {idx})
     protocol.disconnect()
 
+async def set_output_status(protocol: Protocol):
+    await protocol.connect()
+    idx = int(input("Output ID: "))
+    enable = input("Enable/Disable [True/False]: ")
+    if enable.lower() == "true":
+        enable = True
+    else:
+        enable = False
+    print(f"Chose {enable}")
+
+    await set_output_status_op(protocol, idx, enable)
+    protocol.disconnect()
+
 # ---------------------------------------------------------------------------
 # REPL
 # ---------------------------------------------------------------------------
+terminal_intervals = None
+partition_ids = None
+
+async def ensure_partition_ids(protocol: Protocol):
+    global partition_ids, terminal_intervals
+    await ensure_terminal_intervals(protocol)
+    if partition_ids is None:
+        await protocol.connect()
+        zones = await get_zones_by_intervals(protocol, terminal_intervals[TerminalState.ZONE])
+        partition_ids = get_partition_ids_from_zones(zones)
+
+
+async def ensure_terminal_intervals(protocol: Protocol):
+    global terminal_intervals
+
+    if terminal_intervals is None:
+        await protocol.connect()
+        terminal_intervals = await get_terminals_intervals_by_state(protocol)
+        protocol.disconnect()
+
 
 async def repl(config: Config) -> None:
     packets: list[Packet] | None = None
@@ -257,9 +305,8 @@ async def repl(config: Config) -> None:
     )
 
     print_help()
+    global partition_ids, terminal_intervals
 
-    active_terminal_intervals = None
-    active_zone_intervals = None
 
     handlers = {
         "help":                print_help,
@@ -317,24 +364,25 @@ async def repl(config: Config) -> None:
                     active_filter = None
                     print("Filter cleared.")
         elif choice == "get_partitions":
-            await get_partitions(protocol)
+            await ensure_partition_ids(protocol)
+            await get_partitions(protocol, partition_ids)
         elif choice == "set_partition_arming_statuses":
-            await set_arming_statuses(protocol, config.pin)
+            await ensure_partition_ids(protocol)
+            await set_arming_statuses(protocol, config.pin, partition_ids)
         elif choice == "get_zones":
-            if active_zone_intervals is None:
-                if active_terminal_intervals is None:
-                    await protocol.connect()
-                    active_terminal_intervals = await get_active_terminal_intervals(protocol)
-                    protocol.disconnect()
-                active_zone_intervals = get_zones_intervals(active_terminal_intervals)
-
-            await get_zones(protocol, active_zone_intervals)
+            await ensure_partition_ids(protocol)
+            await get_zones(protocol, terminal_intervals[TerminalState.ZONE], partition_ids)
         elif choice == "set_zone_bypass":
             await set_zone_bypass(protocol)
+        elif choice == "set_output_status":
+            await set_output_status(protocol)
         elif choice == "reset_partition_memory":
             await rest_partition(protocol)
         elif choice == "get_panel_info":
             await get_panel_info(protocol)
+        elif choice == "get_outputs":
+            await ensure_terminal_intervals(protocol)
+            await get_outputs(protocol, terminal_intervals[TerminalState.OUTPUT])
 
         else:
             print(f"Unknown command '{choice}'. Type 'help' for a list of commands.")

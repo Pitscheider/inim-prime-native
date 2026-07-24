@@ -8,6 +8,7 @@ from inim.prime.native.wire import Protocol
 
 async def get_partitions(
     protocol: Protocol,
+    ids: set[int],
     pin: str | None = None,
 ) -> dict[int, Partition]:
     partition_labels, partition_statuses = await asyncio.gather(
@@ -15,14 +16,17 @@ async def get_partitions(
         get_partition_statuses(protocol, pin),
     )
 
-    return {
-        idx: Partition(
-            id=idx,
-            label=label,
-            status=partition_statuses.get(idx),
-        )
-        for idx, label in partition_labels.items()
-    }
+    partitions: dict[int, Partition] = {}
+
+    for idx in ids:
+        label = partition_labels.get(idx)
+        if label is not None:
+            partitions[idx] = Partition(
+                id = idx,
+                label = label,
+                status = partition_statuses.get(idx),
+            )
+    return partitions
 
 async def update_partition_statuses(
     protocol: Protocol,

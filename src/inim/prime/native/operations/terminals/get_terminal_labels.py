@@ -1,33 +1,28 @@
-from typing import Final
-
-from inim.prime.native.const import Memory, AddressTable, Address
-from inim.prime.native.operations import resolve_address
-from inim.prime.native.operations.terminals.utils import validate_terminals_interval
-from inim.prime.native.utils import Interval
+from inim.prime.native.const import Address
+from inim.prime.native.operations.base import get_labels
+from inim.prime.native.operations.terminals.const import TerminalType, TERMINAL_LAYOUT
+from inim.prime.native.utils import Interval, truncate_interval
 from inim.prime.native.wire import Protocol
 
-async def get_terminal_labels_by_interval(
+async def get_terminal_labels(
         protocol: Protocol,
         interval: Interval,
 ) -> dict[int, str]:
-
-    validate_terminals_interval(interval)
-    terminals_number = interval.end - interval.start + 1
-
-
-    size = Memory.LABEL_SIZE * terminals_number
-
-    response = await protocol.read_memory(
-        start_address = Address.GET_TERMINAL_LABELS + interval.start * Memory.LABEL_SIZE,
-        bytes_to_read = size
+    standard_terminals_interval = truncate_interval(
+        interval,
+        TERMINAL_LAYOUT[TerminalType.PANEL].start,
+        TERMINAL_LAYOUT[TerminalType.VIRTUAL].stop - 1,
+    )
+    output_terminals_interval = truncate_interval(
+        interval,
+        TERMINAL_LAYOUT[TerminalType.OUTPUT].start,
+        TERMINAL_LAYOUT[TerminalType.OUTPUT].stop - 1,
     )
 
-    terminals = {}
+    labels = {}
+    if standard_terminals_interval is not None:
+        labels |= await get_labels(protocol, standard_terminals_interval, Address.TERMINAL_LABELS)
+    if output_terminals_interval is not None:
+        labels |= await get_labels(protocol, output_terminals_interval, Address.OUTPUT_LABELS, -TERMINAL_LAYOUT[TerminalType.OUTPUT].start)
 
-    for idx, offset in enumerate(
-            range(0, size, Memory.LABEL_SIZE),
-            start = interval.start,
-    ):
-        label = response[offset:offset + Memory.LABEL_SIZE]
-        terminals[idx] = label.decode("ascii").strip()
-    return terminals
+    return labels

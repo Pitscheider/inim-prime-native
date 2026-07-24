@@ -26,13 +26,18 @@ class Partition:
     status: PartitionStatus | None
 
     def __str__(self) -> str:
-
-        return (
+        if self.status is not None:
+            return (
+                    f"ID={self.id} - {self.label}"
+                    f"\n\tArming status: {self.status.arming_status.name}"
+                    f"\n\tAlarm: {self.status.alarm}"
+                    f"\n\tAlarm memory: {self.status.alarm_memory}"
+                    f"\n\tSabotage: {self.status.sabotage}"
+                    f"\n\tSabotage memory: {self.status.sabotage_memory}"
+                    f"\n\tRaw status: {self.status.raw.hex(" ")}"
+            )
+        else:
+            return (
                 f"ID={self.id} - {self.label}"
-                f"\n\tArming status: {self.status.arming_status.name}"
-                f"\n\tAlarm: {self.status.alarm}"
-                f"\n\tAlarm memory: {self.status.alarm_memory}"
-                f"\n\tSabotage: {self.status.sabotage}"
-                f"\n\tSabotage memory: {self.status.sabotage_memory}"
-                f"\n\tRaw status: {self.status.raw.hex(" ")}"
-        )
+                f"\n\tStatus: None"
+            )

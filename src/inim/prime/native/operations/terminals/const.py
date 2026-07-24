@@ -1,6 +1,7 @@
 from enum import StrEnum, auto
 from typing import Final
 
+from inim.prime.native.models.terminals import TerminalState
 from inim.prime.native.utils import next_slice
 
 
@@ -16,6 +17,7 @@ class TerminalType(StrEnum):
     POWER_STATION = auto()
     FOG_MACHINE = auto()
     VIRTUAL = auto()
+    OUTPUT = auto()
 
 TERMINALS_MAX_NUMBER: Final[dict[TerminalType, int]] = {
     TerminalType.PANEL: 10,
@@ -29,6 +31,7 @@ TERMINALS_MAX_NUMBER: Final[dict[TerminalType, int]] = {
     TerminalType.POWER_STATION: 10 * 2,
     TerminalType.FOG_MACHINE: 10,
     TerminalType.VIRTUAL: 20,
+    TerminalType.OUTPUT: 5,
 }
 
 def _build_terminal_layout() -> dict[TerminalType, slice]:
@@ -46,3 +49,13 @@ def _build_terminal_layout() -> dict[TerminalType, slice]:
 LAST_TERMINAL_ID: Final[int] = sum(TERMINALS_MAX_NUMBER.values()) - 1
 
 TERMINAL_LAYOUT: Final[dict[TerminalType, slice]] = _build_terminal_layout()
+
+TERMINAL_STATE_MAP = {
+    0x00: TerminalState.ZONE,
+    0x01: TerminalState.OUTPUT,
+    0x04: TerminalState.DISCONNECTED,
+}
+
+TERMINAL_STATE_REVERSE_MAP = {
+    value: key for key, value in TERMINAL_STATE_MAP.items()
+}

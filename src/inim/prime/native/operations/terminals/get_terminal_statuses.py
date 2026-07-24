@@ -1,9 +1,8 @@
 from typing import Final
 
 from inim.prime.native.const import Encoding, CommandOperation
-from inim.prime.native.models.terminals import TerminalStatus
-from inim.prime.native.operations.terminals.const import LAST_TERMINAL_ID
-from inim.prime.native.operations.terminals.utils import validate_terminals_interval
+from inim.prime.native.models.terminals import TerminalStatus, TerminalState
+from inim.prime.native.operations.terminals.const import LAST_TERMINAL_ID, TERMINAL_STATE_MAP
 from inim.prime.native.utils import encode_int, Interval
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
@@ -28,7 +27,8 @@ def assemble_payload(start_terminal: int, end_terminal: int, pin: str | None = N
         data = assemble_data(start_terminal, end_terminal),
     )
 
-
+def decode_terminal_state(raw_bytes: bytes) -> TerminalState:
+    return TERMINAL_STATE_MAP[raw_bytes[0]]
 
 def disassemble_payload(start_terminal: int, end_terminal: int, response_data: bytes) -> dict[int, TerminalStatus]:
     terminal_statuses: dict[int, TerminalStatus] = {}
@@ -39,10 +39,11 @@ def disassemble_payload(start_terminal: int, end_terminal: int, response_data: b
     ):
         offset = idx * TERMINAL_STATUS_SIZE
         raw_status = response_data[offset:offset + TERMINAL_STATUS_SIZE]
+        state = decode_terminal_state(raw_status)
 
         terminal_statuses[t_id] = TerminalStatus(
             raw = raw_status,
-            active = raw_status[0] == 0x00,
+            state = state,
         )
 
 
@@ -80,13 +81,11 @@ async def get_chunks(
 
     return chunks
 
-async def get_terminal_statuses_by_interval(
+async def get_terminal_statuses(
         protocol: Protocol,
         interval: Interval = Interval(0, LAST_TERMINAL_ID),
         pin: str | None = None,
 ) -> dict[int, TerminalStatus]:
-    validate_terminals_interval(interval)
-
     chunks = await get_chunks(
         protocol = protocol,
         start_terminal = interval.start,

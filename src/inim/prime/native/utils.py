@@ -102,6 +102,26 @@ class Interval:
     start: int
     end: int  # inclusive
 
+def validate_interval(interval: Interval, bounds: Interval):
+    if interval.start < bounds.start:
+        raise ValueError(f"{interval.start} must be >= {bounds.start}")
+    if interval.end < interval.start:
+        raise ValueError(f"{interval.end} must be >= {interval.start}")
+    if interval.end > bounds.end:
+        raise ValueError(f"{interval.end} must be <= {bounds.end}")
+
+def truncate_interval(
+    interval: Interval,
+    min_start: int,
+    max_end: int,
+) -> Interval | None:
+    start = max(interval.start, min_start)
+    end = min(interval.end, max_end)
+
+    if start <= end:  # still contains at least one value
+        return Interval(start, end)
+    return None
+
 
 def truncate_intervals(
     intervals: list[Interval],
@@ -111,10 +131,26 @@ def truncate_intervals(
     result = []
 
     for interval in intervals:
-        start = max(interval.start, min_start)
-        end = min(interval.end, max_end)
+        t_interval = truncate_interval(interval, min_start, max_end)
 
-        if start <= end:  # still contains at least one value
-            result.append(Interval(start, end))
+        if t_interval is not None:  # still contains at least one value
+            result.append(t_interval)
 
     return result
+
+def make_intervals(values: list[int]) -> list[Interval]:
+    if not values:
+        return []
+
+    intervals = []
+    start = end = values[0]
+
+    for value in values[1:]:
+        if value == end + 1:
+            end = value
+        else:
+            intervals.append(Interval(start, end))
+            start = end = value
+
+    intervals.append(Interval(start, end))
+    return intervals
