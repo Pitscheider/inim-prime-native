@@ -28,7 +28,7 @@ def assemble_payload(start_terminal: int, end_terminal: int, pin: str | None = N
     )
 
 def decode_terminal_state(raw_bytes: bytes) -> TerminalState:
-    return TERMINAL_STATE_MAP[raw_bytes[0]]
+    return TERMINAL_STATE_MAP.get(raw_bytes[0], TerminalState.UNKNOWN)
 
 def disassemble_payload(start_terminal: int, end_terminal: int, response_data: bytes) -> dict[int, TerminalStatus]:
     terminal_statuses: dict[int, TerminalStatus] = {}

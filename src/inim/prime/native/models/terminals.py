@@ -5,6 +5,7 @@ class TerminalState(Enum):
     ZONE = auto()
     OUTPUT = auto()
     DISCONNECTED = auto()
+    UNKNOWN = auto()
 
 @dataclass(frozen = True)
 class TerminalStatus:
@@ -31,7 +32,6 @@ class Terminal:
                 f"ID={self.id} - {self.label}"
                 f"\n\tTerminal state: {self.terminal_status.state.name}"
                 f"\n\tRaw status: {self.terminal_status.raw.hex(" ")}"
-                f"\n\tSetting: {self.setting.raw.hex(" ")}"
             )
         else:
             return (

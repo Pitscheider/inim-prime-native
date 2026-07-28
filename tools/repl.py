@@ -1,9 +1,10 @@
 import asyncio
 
 from inim.prime.native.helpers.outputs import get_outputs_by_intervals
-from inim.prime.native.helpers.terminals import get_terminals_intervals_by_state
+from inim.prime.native.helpers.terminals import get_terminals_intervals_by_state, get_terminals_by_intervals
 from inim.prime.native.helpers.zones import get_zones_by_intervals, get_partition_ids_from_zones
 from inim.prime.native.models.terminals import TerminalState
+from inim.prime.native.operations.terminals.const import LAST_TERMINAL_ID
 from inim.prime.native.utils import Interval
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire import Cipher
@@ -40,6 +41,7 @@ Commands:
   get_outputs                   - Get output with status
   set_output_status             - Set output status
   get_panel_info                - Print panel info
+  get_terminals                 - Print terminals info
   exit / quit                   – Exit the program
 """
 
@@ -267,6 +269,17 @@ async def set_output_status(protocol: Protocol):
     await set_output_status_op(protocol, idx, enable)
     protocol.disconnect()
 
+async def get_terminals(protocol: Protocol):
+    await protocol.connect()
+    intervals = [Interval(0, LAST_TERMINAL_ID)]
+    terminals = await get_terminals_by_intervals(protocol, intervals)
+
+    for terminal in terminals.values():
+        print(terminal)
+
+    protocol.disconnect()
+
+
 # ---------------------------------------------------------------------------
 # REPL
 # ---------------------------------------------------------------------------
@@ -383,6 +396,8 @@ async def repl(config: Config) -> None:
         elif choice == "get_outputs":
             await ensure_terminal_intervals(protocol)
             await get_outputs(protocol, terminal_intervals[TerminalState.OUTPUT])
+        elif choice == "get_terminals":
+            await get_terminals(protocol)
 
         else:
             print(f"Unknown command '{choice}'. Type 'help' for a list of commands.")
