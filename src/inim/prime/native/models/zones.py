@@ -29,13 +29,22 @@ class Zone:
     zone_status: ZoneStatus
     zone_setting: ZoneSetting | None
 
+
     def __str__(self) -> str:
-        return (
-            f"\tZone ID={self.zone_id} - {self.label}"
-            f"\n\t\tState: {self.zone_status.state.name}"
-            f"\n\t\tBypass: {self.zone_status.bypass}"
-            f"\n\t\tPartition IDs: {sorted(self.zone_setting.partitions)}"
-        )
+        if self.zone_setting is not None:
+            return (
+                f"\tZone ID={self.zone_id} - {self.label}"
+                f"\n\t\tState: {self.zone_status.state.name}"
+                f"\n\t\tBypass: {self.zone_status.bypass}"
+                f"\n\t\tPartition IDs: {sorted(self.zone_setting.partitions)}"
+            )
+        else:
+            return (
+                f"\tZone ID={self.zone_id} - {self.label}"
+                f"\n\t\tState: {self.zone_status.state.name}"
+                f"\n\t\tBypass: {self.zone_status.bypass}"
+                f"\n\t\tPartition IDs: None"
+            )
 
     # def to_string_partition_labels(
     #         self,
