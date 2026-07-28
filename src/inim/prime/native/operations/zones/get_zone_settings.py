@@ -2,6 +2,7 @@ from typing import Final
 
 from inim.prime.native.const import Address, Encoding
 from inim.prime.native.models.zones import ZoneSetting
+from inim.prime.native.operations.zones.const import ZONE_TERMINAL_IDS_INTERVAL, ZONE_IDS_INTERVAL
 from inim.prime.native.utils import Interval, decode_int
 from inim.prime.native.wire import Protocol
 
@@ -21,7 +22,7 @@ def _decode_partitions(raw_bytes: bytes) -> frozenset[int]:
 
 async def get_zone_settings(
         protocol: Protocol,
-        interval: Interval,
+        interval: Interval = ZONE_IDS_INTERVAL,
 ) -> dict[int, ZoneSetting]:
     zones_number = interval.end - interval.start + 1
 

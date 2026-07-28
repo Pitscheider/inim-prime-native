@@ -1,7 +1,7 @@
 from typing import Final
 
 from inim.prime.native.const import Encoding
-from inim.prime.native.helpers.terminals import get_terminals_by_intervals, update_terminal_statuses_by_intervals
+from inim.prime.native.helpers.terminals import update_terminal_statuses_by_intervals
 from inim.prime.native.models import PartitionStatus
 from inim.prime.native.models.outputs import Output, OutputStatus
 from inim.prime.native.models.terminals import Terminal

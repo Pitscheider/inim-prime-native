@@ -4,10 +4,22 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0c904636-8b4a-4c5f-878c-ed2f9cba7311" name="Changes" comment="Added Outputs">
+    <list default="true" id="0c904636-8b4a-4c5f-878c-ed2f9cba7311" name="Changes" comment="Added get_terminals and added an UNKNOWN terminal state">
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/const.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/get_zone_labels.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/get_zone_statuses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/const.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/helpers/outputs.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/helpers/outputs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/helpers/terminals.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/helpers/terminals.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/helpers/zones.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/helpers/zones.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/outputs.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/outputs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/terminals.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/terminals.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/zones.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/zones.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/const.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/get_terminal_labels.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/get_terminal_statuses.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/get_terminal_statuses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/get_zone_settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/get_zone_settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tools/repl.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/repl.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -463,7 +475,8 @@
       <workItem from="1784835638220" duration="162000" />
       <workItem from="1784879778807" duration="11537000" />
       <workItem from="1784894620505" duration="8840000" />
-      <workItem from="1785223177661" duration="1198000" />
+      <workItem from="1785223177661" duration="5266000" />
+      <workItem from="1785231282389" duration="11390000" />
     </task>
     <task id="LOCAL-00001" summary="Refactor">
       <option name="closed" value="true" />
@@ -657,7 +670,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784903373916</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Added get_terminals and added an UNKNOWN terminal state">
+      <option name="closed" value="true" />
+      <created>1785225104258</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1785225104259</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -691,13 +712,14 @@
     <MESSAGE value="Added REPL operations" />
     <MESSAGE value="Fixed order declearation for terminals" />
     <MESSAGE value="Added Outputs" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added Outputs" />
+    <MESSAGE value="Added get_terminals and added an UNKNOWN terminal state" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added get_terminals and added an UNKNOWN terminal state" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/inim_prime_native$partitions.coverage" NAME="partitions Coverage Results" MODIFIED="1784899381119" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
     <SUITE FILE_PATH="coverage/inim_prime_native$zones.coverage" NAME="zones Coverage Results" MODIFIED="1784811105932" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
-    <SUITE FILE_PATH="coverage/inim_prime_native$test.coverage" NAME="test Coverage Results" MODIFIED="1784902773684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/local" />
-    <SUITE FILE_PATH="coverage/inim_prime_native$repl.coverage" NAME="repl Coverage Results" MODIFIED="1785225069542" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/inim_prime_native$test.coverage" NAME="test Coverage Results" MODIFIED="1785250182210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/local" />
+    <SUITE FILE_PATH="coverage/inim_prime_native$repl.coverage" NAME="repl Coverage Results" MODIFIED="1785250422679" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tools" />
     <SUITE FILE_PATH="coverage/inim_prime_native$terminals.coverage" NAME="terminals Coverage Results" MODIFIED="1784729328171" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
   </component>
 </project>

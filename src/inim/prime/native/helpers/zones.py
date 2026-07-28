@@ -1,7 +1,9 @@
 from inim.prime.native.const import Encoding
-from inim.prime.native.helpers.terminals import get_terminals_by_intervals, update_terminal_statuses_by_intervals
-from inim.prime.native.models.terminals import Terminal
-from inim.prime.native.models.zones import Zone, ZoneState, ZoneStatus, ZoneSetting
+from inim.prime.native.helpers.terminals import update_terminal_statuses_by_intervals, initialize_terminals
+from inim.prime.native.models.terminals import Terminal, TerminalType
+from inim.prime.native.models.zones import Zone, ZoneState, ZoneStatus, ZoneSetting, SingleZone, DoubleZone
+from inim.prime.native.operations.zones.const import ZONE_TERMINAL_IDS_INTERVAL, ZONE_IDS_INTERVAL, ZONE_1_ID_OFFSET
+from inim.prime.native.operations.zones.get_zone_labels import get_zone_labels
 from inim.prime.native.operations.zones.get_zone_settings import get_zone_settings
 from inim.prime.native.utils import Interval, decode_int
 from inim.prime.native.wire import Protocol
@@ -12,20 +14,52 @@ from inim.prime.native.wire import Protocol
 [2:3] Exclusion Status (x08 not bypassed, x18 bypassed) (Not sure about other values) (maybe is a multiple flag value, so i consider only bit 4)
 '''
 
-def _decode_zone_bypass(
-        raw_bytes: bytes,
+#
+#   Zone bypass decode
+#
+def _decode_zone_bypass_byte(
+        byte: int,
 ) -> bool:
-    byte = decode_int(raw_bytes[2:3], Encoding.UINT8)
     return bool((byte >> 4) & 1)
 
-def _decode_zone_state(
+def _decode_double_zone_bypass(
         raw_bytes: bytes,
-) -> ZoneState | None:
-    state_int = decode_int(raw_bytes[4:5], Encoding.UINT8)
+) -> tuple[bool, bool]:
+    zone_0 = _decode_zone_bypass_byte(raw_bytes[2])
+    zone_1 = _decode_zone_bypass_byte(raw_bytes[6])
+    return zone_0, zone_1
+
+def _decode_single_zone_bypass(
+        raw_bytes: bytes,
+) -> bool:
+    return _decode_zone_bypass_byte(raw_bytes[2])
+
+
+#
+#   Zone state decode
+#
+def _decode_zone_state(
+        byte: int,
+) -> ZoneState:
     try:
-        return ZoneState(state_int)
+        return ZoneState(byte)
     except ValueError:
-        return None
+        return ZoneState.UNKNOWN
+
+def _decode_double_zone_state(
+        raw_bytes: bytes,
+) -> tuple[ZoneState, ZoneState]:
+    zone_0 = _decode_zone_state(raw_bytes[4])
+    zone_1 = _decode_zone_state(raw_bytes[8])
+    return zone_0, zone_1
+
+def _decode_single_zone_state(
+        raw_bytes: bytes,
+) -> ZoneState:
+    return _decode_zone_state(raw_bytes[4])
+
+
+
 
 def get_partition_ids_from_zones(
         zones: dict[int, Zone],
@@ -45,8 +79,8 @@ def terminals_to_zones(
         zone_status = None
 
         if t.terminal_status is not None:
-            state = _decode_zone_state(t.terminal_status.raw)
-            bypass = _decode_zone_bypass(t.terminal_status.raw)
+            state = _decode_single_zone_state(t.terminal_status.raw)
+            bypass = _decode_single_zone_bypass(t.terminal_status.raw)
 
             zone_status = ZoneStatus(
                 state=state,
@@ -61,14 +95,92 @@ def terminals_to_zones(
 
     return zones
 
-async def get_zones_by_intervals(
+async def initialize_zones(
         protocol: Protocol,
-        intervals: list[Interval],
         pin: str | None = None,
-) -> dict[int, Zone]:
-    terminals = await get_terminals_by_intervals(protocol, intervals, pin)
-    zone_settings = await get_zone_settings_by_intervals(protocol, intervals)
-    return terminals_to_zones(terminals, zone_settings)
+):
+    zones: dict[int, Terminal] = {}
+    terminals = await initialize_terminals(protocol, ZONE_TERMINAL_IDS_INTERVAL, pin)
+    zone_labels = await get_zone_labels(protocol, ZONE_IDS_INTERVAL)
+    zone_settings = await get_zone_settings(protocol, ZONE_TERMINAL_IDS_INTERVAL)
+
+    for idx, terminal in terminals.items():
+        if terminal.terminal_status is not None:
+            if terminal.terminal_status.type == TerminalType.SINGLE_ZONE:
+                zone_id = terminal.terminal_id
+
+                state = _decode_single_zone_state(terminal.terminal_status.raw)
+                bypass = _decode_single_zone_bypass(terminal.terminal_status.raw)
+                zone_status = ZoneStatus(
+                    state = state,
+                    bypass=bypass,
+                )
+
+                zone = Zone(
+                    zone_id = zone_id,
+                    label = zone_labels[zone_id],
+                    zone_status = zone_status,
+                    zone_setting = zone_settings.get(zone_id),
+                )
+                single_zone = SingleZone.from_terminal(
+                    terminal = terminal,
+                    zone = zone,
+                )
+                zones[idx] = single_zone
+
+            elif terminal.terminal_status.type == TerminalType.DOUBLE_ZONE:
+                state = _decode_double_zone_state(terminal.terminal_status.raw)
+                bypass = _decode_double_zone_bypass(terminal.terminal_status.raw)
+
+                # Zone 0
+                zone_0_id = terminal.terminal_id
+
+                zone_0_status = ZoneStatus(
+                    state = state[0],
+                    bypass = bypass[0],
+                )
+
+                zone_0 = Zone(
+                    zone_id = zone_0_id,
+                    label = zone_labels[zone_0_id],
+                    zone_status = zone_0_status,
+                    zone_setting = zone_settings.get(zone_0_id),
+                )
+
+
+                # Zone 1
+                zone_1_id = zone_0_id + ZONE_1_ID_OFFSET
+
+                zone_1_status = ZoneStatus(
+                    state = state[1],
+                    bypass = bypass[1],
+                )
+
+                zone_1 = Zone(
+                    zone_id = zone_1_id,
+                    label = zone_labels[zone_1_id],
+                    zone_status = zone_1_status,
+                    zone_setting = zone_settings.get(zone_1_id),
+                )
+
+                double_zone = DoubleZone.from_terminal(
+                    terminal = terminal,
+                    zone_0 = zone_0,
+                    zone_1 = zone_1,
+                )
+                zones[idx] = double_zone
+
+    return zones
+
+
+# async def get_zones_by_intervals(
+#         protocol: Protocol,
+#         terminal_intervals: list[Interval],
+#         pin: str | None = None,
+# ) -> dict[int, Zone]:
+#     terminals = await get_terminals_by_intervals(protocol, terminal_intervals, pin)
+#     zone_settings = await get_zone_settings_by_intervals(protocol, terminal_intervals)
+#     return terminals_to_zones(terminals, zone_settings)
 
 
 
@@ -83,8 +195,8 @@ async def update_zone_statuses_by_intervals(
         zone_status = None
 
         if zone.terminal_status is not None:
-            state = _decode_zone_state(zone.terminal_status.raw)
-            bypass = _decode_zone_bypass(zone.terminal_status.raw)
+            state = _decode_single_zone_state(zone.terminal_status.raw)
+            bypass = _decode_single_zone_bypass(zone.terminal_status.raw)
 
             zone_status = ZoneStatus(
                 state = state,

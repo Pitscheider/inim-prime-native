@@ -1,10 +1,9 @@
 import asyncio
 
 from inim.prime.native.helpers.outputs import get_outputs_by_intervals
-from inim.prime.native.helpers.terminals import get_terminals_intervals_by_state, get_terminals_by_intervals
-from inim.prime.native.helpers.zones import get_zones_by_intervals, get_partition_ids_from_zones
-from inim.prime.native.models.terminals import TerminalState
-from inim.prime.native.operations.terminals.const import LAST_TERMINAL_ID
+from inim.prime.native.helpers.terminals import initialize_terminals
+
+from inim.prime.native.helpers.zones import get_partition_ids_from_zones, initialize_zones
 from inim.prime.native.utils import Interval
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire import Cipher
@@ -218,14 +217,14 @@ async def get_panel_info(protocol: Protocol):
     protocol.disconnect()
 
 
-async def get_zones(protocol: Protocol, active_zone_intervals: list[Interval], partition_ids: set[int]):
+async def get_zones(protocol: Protocol):
     await protocol.connect()
-    zones = await get_zones_by_intervals(protocol, active_zone_intervals)
-    partitions = await get_partitions_op(protocol, partition_ids)
-    for zone in zones.values():
-        print(zone.to_string_partition_labels(partitions))
+    zones = await initialize_zones(protocol)
+    # partitions = await get_partitions_op(protocol, partition_ids)
     # for zone in zones.values():
-    #     print(zone)
+    #     print(zone.to_string_partition_labels(partitions))
+    for zone in zones.values():
+        print(zone)
     print()
     protocol.disconnect()
 
@@ -271,8 +270,8 @@ async def set_output_status(protocol: Protocol):
 
 async def get_terminals(protocol: Protocol):
     await protocol.connect()
-    intervals = [Interval(0, LAST_TERMINAL_ID)]
-    terminals = await get_terminals_by_intervals(protocol, intervals)
+
+    terminals = await initialize_terminals(protocol)
 
     for terminal in terminals.values():
         print(terminal)
@@ -286,22 +285,22 @@ async def get_terminals(protocol: Protocol):
 terminal_intervals = None
 partition_ids = None
 
-async def ensure_partition_ids(protocol: Protocol):
-    global partition_ids, terminal_intervals
-    await ensure_terminal_intervals(protocol)
-    if partition_ids is None:
-        await protocol.connect()
-        zones = await get_zones_by_intervals(protocol, terminal_intervals[TerminalState.ZONE])
-        partition_ids = get_partition_ids_from_zones(zones)
+# async def ensure_partition_ids(protocol: Protocol):
+#     global partition_ids, terminal_intervals
+#     await ensure_terminal_intervals(protocol)
+#     if partition_ids is None:
+#         await protocol.connect()
+#         zones = await get_zones_by_intervals(protocol, terminal_intervals[TerminalState.ZONE])
+#         partition_ids = get_partition_ids_from_zones(zones)
 
 
-async def ensure_terminal_intervals(protocol: Protocol):
-    global terminal_intervals
-
-    if terminal_intervals is None:
-        await protocol.connect()
-        terminal_intervals = await get_terminals_intervals_by_state(protocol)
-        protocol.disconnect()
+# async def ensure_terminal_intervals(protocol: Protocol):
+#     global terminal_intervals
+#
+#     if terminal_intervals is None:
+#         await protocol.connect()
+#         terminal_intervals = await get_terminals_intervals_by_state(protocol)
+#         protocol.disconnect()
 
 
 async def repl(config: Config) -> None:
@@ -376,15 +375,15 @@ async def repl(config: Config) -> None:
                     filtered_packets = packets
                     active_filter = None
                     print("Filter cleared.")
-        elif choice == "get_partitions":
-            await ensure_partition_ids(protocol)
-            await get_partitions(protocol, partition_ids)
-        elif choice == "set_partition_arming_statuses":
-            await ensure_partition_ids(protocol)
-            await set_arming_statuses(protocol, config.pin, partition_ids)
+        # elif choice == "get_partitions":
+        #     await ensure_partition_ids(protocol)
+        #     await get_partitions(protocol, partition_ids)
+        # elif choice == "set_partition_arming_statuses":
+        #     await ensure_partition_ids(protocol)
+        #     await set_arming_statuses(protocol, config.pin, partition_ids)
         elif choice == "get_zones":
-            await ensure_partition_ids(protocol)
-            await get_zones(protocol, terminal_intervals[TerminalState.ZONE], partition_ids)
+            # await ensure_partition_ids(protocol)
+            await get_zones(protocol)
         elif choice == "set_zone_bypass":
             await set_zone_bypass(protocol)
         elif choice == "set_output_status":
@@ -393,9 +392,9 @@ async def repl(config: Config) -> None:
             await rest_partition(protocol)
         elif choice == "get_panel_info":
             await get_panel_info(protocol)
-        elif choice == "get_outputs":
-            await ensure_terminal_intervals(protocol)
-            await get_outputs(protocol, terminal_intervals[TerminalState.OUTPUT])
+        # elif choice == "get_outputs":
+        #     await ensure_terminal_intervals(protocol)
+        #     await get_outputs(protocol, terminal_intervals[TerminalState.OUTPUT])
         elif choice == "get_terminals":
             await get_terminals(protocol)
 

@@ -1,40 +1,41 @@
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum, auto, IntEnum
 
-class TerminalState(Enum):
-    ZONE = auto()
-    OUTPUT = auto()
-    DISCONNECTED = auto()
+
+class TerminalType(IntEnum):
+    SINGLE_ZONE = 0
+    OUTPUT = 1
+    DOUBLE_ZONE = 3
+    DISABLED = 4
     UNKNOWN = auto()
 
 @dataclass(frozen = True)
 class TerminalStatus:
     raw: bytes
-    state: TerminalState
+    type: TerminalType
 
     def __str__(self) -> str:
         return (
             f"TerminalStatus("
-            f"active={self.state.name}, "
+            f"active={self.type.name}, "
             f"raw={self.raw.hex(" ")}"
             f")"
         )
 
 @dataclass
 class Terminal:
-    id: int
-    label: str
+    terminal_id: int
     terminal_status: TerminalStatus | None
 
     def __str__(self) -> str:
         if self.terminal_status is not None:
             return (
-                f"ID={self.id} - {self.label}"
-                f"\n\tTerminal state: {self.terminal_status.state.name}"
+                f"Terminal ID={self.terminal_id}"
+                f"\n\tTerminal type: {self.terminal_status.type.name}"
                 f"\n\tRaw status: {self.terminal_status.raw.hex(" ")}"
             )
         else:
             return (
-                f"ID={self.id} - {self.label}"
+                f"ID={self.terminal_id}"
                 f"\n\tTerminal status: {None}"
             )

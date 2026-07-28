@@ -1,8 +1,7 @@
 from typing import Final
 
 from inim.prime.native.const import Encoding, CommandOperation
-from inim.prime.native.models.terminals import TerminalStatus, TerminalState
-from inim.prime.native.operations.terminals.const import LAST_TERMINAL_ID, TERMINAL_STATE_MAP
+from inim.prime.native.models.terminals import TerminalType, TerminalStatus
 from inim.prime.native.utils import encode_int, Interval
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
@@ -14,6 +13,14 @@ RESPONSE_PAYLOAD_DATA_LENGTH: Final[int] = TERMINAL_STATUS_SIZE * MAX_CHUNK_TERM
 COMMAND_OPERATION: Final[CommandOperation] = CommandOperation.GET_TERMINAL_STATUSES
 
 ### Functions
+def decode_terminal_type(raw_bytes: bytes) -> TerminalType:
+    # Check the first byte to determine terminal type
+    try:
+        return TerminalType(raw_bytes[0])
+    except ValueError:
+        return TerminalType.UNKNOWN
+
+
 def assemble_data(start_terminal: int, end_terminal: int) -> bytes:
     return b"".join((
         encode_int(start_terminal, Encoding.UINT16_LE),
@@ -27,10 +34,11 @@ def assemble_payload(start_terminal: int, end_terminal: int, pin: str | None = N
         data = assemble_data(start_terminal, end_terminal),
     )
 
-def decode_terminal_state(raw_bytes: bytes) -> TerminalState:
-    return TERMINAL_STATE_MAP.get(raw_bytes[0], TerminalState.UNKNOWN)
-
-def disassemble_payload(start_terminal: int, end_terminal: int, response_data: bytes) -> dict[int, TerminalStatus]:
+def disassemble_payload(
+        start_terminal: int,
+        end_terminal: int,
+        response_data: bytes
+) -> dict[int, TerminalStatus]:
     terminal_statuses: dict[int, TerminalStatus] = {}
 
     for idx, t_id in enumerate(
@@ -39,11 +47,11 @@ def disassemble_payload(start_terminal: int, end_terminal: int, response_data: b
     ):
         offset = idx * TERMINAL_STATUS_SIZE
         raw_status = response_data[offset:offset + TERMINAL_STATUS_SIZE]
-        state = decode_terminal_state(raw_status)
+        terminal_type = decode_terminal_type(raw_status)
 
         terminal_statuses[t_id] = TerminalStatus(
             raw = raw_status,
-            state = state,
+            type = terminal_type,
         )
 
 
@@ -83,7 +91,7 @@ async def get_chunks(
 
 async def get_terminal_statuses(
         protocol: Protocol,
-        interval: Interval = Interval(0, LAST_TERMINAL_ID),
+        interval: Interval,
         pin: str | None = None,
 ) -> dict[int, TerminalStatus]:
     chunks = await get_chunks(
