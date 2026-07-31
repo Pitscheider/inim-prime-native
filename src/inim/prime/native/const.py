@@ -19,13 +19,30 @@ class EncodingSizes:
 
 
 class CommandOperation(IntEnum):
+    TEST_0 = 0
+    TEST_1 = 1
+    TEST_2 = 2
     SET_ARMING_STATUS = 3
+    TEST_4 = 4
+    TEST_5 = 5
     GET_PARTITION_STATUSES = 6
     GET_TERMINAL_STATUSES = 7
     SET_OUTPUT_STATUS = 8
     SET_ZONE_BYPASS = 9
+    SET_DATETIME = 10
+    TEST_11 = 11
+    TEST_12 = 12
+    TEST_13 = 13
+    TEST_14 = 14
+    TEST_15 = 15
     RESET_PARTITIONS = 16
+    TEST_17 = 17
+    TEST_18 = 18
+    TEST_19 = 19
+    TEST_20 = 20
+    TEST_21 = 21
     GET_PANEL_INFO = 23
+
 
 class Address(IntEnum):
     ZONE_SETTINGS = 336016404

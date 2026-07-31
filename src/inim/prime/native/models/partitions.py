@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, Enum, auto
 from typing import Self, ClassVar
 
 
@@ -9,16 +9,20 @@ class ArmingStatus(IntEnum):
     ARM_INSTANT = 3
     DISARMED = 4
 
+class PartitionAlarmStatus(Enum):
+    NO_ALARM = auto()
+    ACTIVE_ALARM = auto()
+    ALARM_MEMORY = auto()
+
+
 @dataclass(frozen = True)
 class PartitionStatus:
     ### Constants
     RAW_SIZE: ClassVar[int] = 3
     # CONFIGURED_MASK: ClassVar[int] = 0x10
-    ALARM_MASK: ClassVar[int] = 0x01
 
     arming_status: ArmingStatus
-    alarm: bool
-    alarm_memory: bool
+    alarm_status: PartitionAlarmStatus
     sabotage: bool | None
     sabotage_memory: bool | None
     raw: bytes
@@ -32,12 +36,11 @@ class PartitionStatus:
             return None
         else:
             arming_status = cls.decode_arming_status_byte(raw[1])
-            alarm = cls.decode_alarm_byte(raw[2])
+            alarm_status = cls.decode_alarm_byte(raw[0], raw[2], arming_status)
 
             return cls(
                 arming_status = arming_status,
-                alarm = alarm,
-                alarm_memory = alarm,
+                alarm_status = alarm_status,
                 sabotage = None,
                 sabotage_memory = None,
                 raw = raw,
@@ -51,9 +54,17 @@ class PartitionStatus:
 
     @staticmethod
     def decode_alarm_byte(
-            byte: int
-    ):
-        return bool(byte & PartitionStatus.ALARM_MASK)
+            byte_0: int,
+            byte_2: int,
+            arming_status: ArmingStatus,
+    ) -> PartitionAlarmStatus:
+        # It is not clear why both values changes, so I chose a flexible approach with OR
+        if byte_0 & 0x01 or byte_2 & 0x01:
+            if arming_status == ArmingStatus.DISARMED:
+                return PartitionAlarmStatus.ALARM_MEMORY
+            else:
+                return PartitionAlarmStatus.ACTIVE_ALARM
+        return PartitionAlarmStatus.NO_ALARM
 
 @dataclass
 class Partition:
@@ -66,8 +77,7 @@ class Partition:
             return (
                     f"ID={self.id} - {self.label}"
                     f"\n\tArming status: {self.status.arming_status.name}"
-                    f"\n\tAlarm: {self.status.alarm}"
-                    f"\n\tAlarm memory: {self.status.alarm_memory}"
+                    f"\n\tAlarm status: {self.status.alarm_status.name}"
                     f"\n\tSabotage: {self.status.sabotage}"
                     f"\n\tSabotage memory: {self.status.sabotage_memory}"
                     f"\n\tRaw status: {self.status.raw.hex(" ")}"

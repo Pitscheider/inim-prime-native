@@ -3,10 +3,7 @@ from typing import Final
 
 from inim.prime.native.utils import Interval
 
-# from inim.prime.native.models.terminals import TerminalState
-# from inim.prime.native.utils import next_slice
-#
-#
+
 # class TerminalType(StrEnum):
 #     PANEL = auto()
 #     EXPANSION = auto()
