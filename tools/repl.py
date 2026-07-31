@@ -1,7 +1,7 @@
 import asyncio
 
 from inim.prime.native import operations
-from inim.prime.native.helpers.partitions import initialize_partitions, update_partition_statuses
+from inim.prime.native.helpers.partitions import initialize_partitions, update_partition_statuses, get_zones_by_partition
 from inim.prime.native.helpers.terminals import initialize_terminals, update_terminal_statuses
 from inim.prime.native.models import ArmingStatus
 from inim.prime.native.models.partitions import Partition
@@ -269,9 +269,14 @@ async def get_terminals(protocol: Protocol):
 
     terminals = await update_terminal_statuses(protocol, terminals, terminals_intervals)
 
+    partition_labels = {
+        partition_id: partition.label
+        for partition_id, partition in partitions.items()
+    }
+
     for terminal in terminals.values():
         if isinstance(terminal, ZoneTerminal):
-            print(terminal.to_string_partition_labels(partitions))
+            print(terminal.to_string_partition_labels(partition_labels))
         else:
             print(terminal)
 
@@ -285,13 +290,7 @@ terminals: dict[int, Terminal] | None = None
 terminals_intervals: list[Interval] | None = None
 partitions: dict[int, Partition] | None = None
 
-async def ensure_partitions(protocol: Protocol):
-    global partitions
 
-    if partitions is None:
-        await protocol.connect()
-        partitions = await initialize_partitions(protocol)
-        protocol.disconnect()
 
 
 async def ensure_terminals(protocol: Protocol):
@@ -302,6 +301,18 @@ async def ensure_terminals(protocol: Protocol):
         terminals, terminals_intervals = await initialize_terminals(protocol)
         protocol.disconnect()
 
+
+async def ensure_partitions(protocol: Protocol):
+    global partitions, terminals
+
+    await ensure_terminals(protocol)
+    assert terminals is not None
+
+    if partitions is None:
+        await protocol.connect()
+        partition_zones = get_zones_by_partition(terminals)
+        partitions = await initialize_partitions(protocol, partition_zones)
+        protocol.disconnect()
 
 async def repl(config: Config) -> None:
     packets: list[Packet] | None = None

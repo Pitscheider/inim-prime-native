@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import IntEnum, Enum, auto
 from typing import Self, ClassVar
 
+from inim.prime.native.models.zones import Zone
+
 
 class ArmingStatus(IntEnum):
     ARM_AWAY = 1
@@ -71,11 +73,15 @@ class Partition:
     id: int
     label: str
     status: PartitionStatus | None
+    zones: set[Zone]
 
     def __str__(self) -> str:
+        zone_labels = [zone.label for zone in self.zones]
+
         if self.status is not None:
             return (
                     f"ID={self.id} - {self.label}"
+                    f"\n\tZones: {zone_labels}"
                     f"\n\tArming status: {self.status.arming_status.name}"
                     f"\n\tAlarm status: {self.status.alarm_status.name}"
                     f"\n\tSabotage: {self.status.sabotage}"
@@ -85,5 +91,6 @@ class Partition:
         else:
             return (
                 f"ID={self.id} - {self.label}"
+                f"\n\tZones: {zone_labels}"
                 f"\n\tStatus: None"
             )

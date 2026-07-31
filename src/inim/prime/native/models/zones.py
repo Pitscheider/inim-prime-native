@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from enum import IntEnum, auto
 from typing import Self
 
-from inim.prime.native.models.partitions import Partition
 from inim.prime.native.models.terminals import Terminal, TerminalStatus
 
 
@@ -40,6 +39,8 @@ class ZoneSetting:
     raw: bytes
     partitions: frozenset[int]
 
+
+
 @dataclass
 class Zone:
     zone_id: int
@@ -47,6 +48,14 @@ class Zone:
     zone_status: ZoneStatus | None
     zone_setting: ZoneSetting
 
+    def __hash__(self) -> int:
+        return hash(self.zone_id)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Zone):
+            return NotImplemented
+
+        return self.zone_id == other.zone_id
 
     def __str__(self) -> str:
         if self.zone_status is not None:
@@ -68,12 +77,12 @@ class Zone:
 
     def to_string_partition_labels(
             self,
-            partitions: dict[int, Partition],
+            partition_labels: dict[int, str],
     ) -> str:
         partition_labels = [
-            partitions[i].label
+            partition_labels[i]
             for i in sorted(self.zone_setting.partitions)
-            if i in partitions
+            if i in partition_labels
         ]
 
         if self.zone_status is not None:
@@ -97,10 +106,14 @@ class ZoneTerminal(Terminal, ABC):
     @abstractmethod
     def to_string_partition_labels(
             self,
-            partitions: dict[int, Partition],
+            partition_labels: dict[int, str],
     ) -> str:
-        pass
+        ...
 
+    @property
+    @abstractmethod
+    def zones(self) -> tuple[Zone, ...]:
+        ...
 
 @dataclass
 class SingleZone(ZoneTerminal):
@@ -113,6 +126,10 @@ class SingleZone(ZoneTerminal):
             terminal_status = terminal.terminal_status,
             zone = zone,
         )
+
+    @property
+    def zones(self) -> tuple[Zone]:
+        return self.zone,
 
     @classmethod
     def decode(
@@ -167,11 +184,11 @@ class SingleZone(ZoneTerminal):
 
     def to_string_partition_labels(
             self,
-            partitions: dict[int, Partition],
+            partition_labels: dict[int, str],
     ) -> str:
         return (
             f"{super().__str__()}"
-            f"\n{self.zone.to_string_partition_labels(partitions)}"
+            f"\n{self.zone.to_string_partition_labels(partition_labels)}"
         )
 
     def update_status(self, status: TerminalStatus | None):
@@ -202,6 +219,10 @@ class DoubleZone(ZoneTerminal):
             zone_0 = zone_0,
             zone_1 = zone_1,
         )
+
+    @property
+    def zones(self) -> tuple[Zone, Zone]:
+        return self.zone_0, self.zone_1
 
     @classmethod
     def decode(
@@ -298,10 +319,10 @@ class DoubleZone(ZoneTerminal):
 
     def to_string_partition_labels(
             self,
-            partitions: dict[int, Partition],
+            partition_labels: dict[int, str],
     ) -> str:
         return (
             f"{super().__str__()}"
-            f"\n{self.zone_0.to_string_partition_labels(partitions)}"
-            f"\n{self.zone_1.to_string_partition_labels(partitions)}"
+            f"\n{self.zone_0.to_string_partition_labels(partition_labels)}"
+            f"\n{self.zone_1.to_string_partition_labels(partition_labels)}"
         )
