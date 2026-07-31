@@ -37,6 +37,7 @@ class Zone:
                 f"\n\t\tState: {self.zone_status.state.name}"
                 f"\n\t\tBypass: {self.zone_status.bypass}"
                 f"\n\t\tPartition IDs: {sorted(self.zone_setting.partitions)}"
+                f"\n\t\tRaw setting: {self.zone_setting.raw.hex(" ")}"
             )
         else:
             return (

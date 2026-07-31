@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0c904636-8b4a-4c5f-878c-ed2f9cba7311" name="Changes" comment="Updated zones logic and big refactoring" />
+    <list default="true" id="0c904636-8b4a-4c5f-878c-ed2f9cba7311" name="Changes" comment="Fix zone print" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -460,6 +460,7 @@
       <workItem from="1784894620505" duration="8840000" />
       <workItem from="1785223177661" duration="5266000" />
       <workItem from="1785231282389" duration="12300000" />
+      <workItem from="1785270850726" duration="890000" />
     </task>
     <task id="LOCAL-00001" summary="Refactor">
       <option name="closed" value="true" />
@@ -669,7 +670,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785250472895</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="Fix zone print">
+      <option name="closed" value="true" />
+      <created>1785270925470</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1785270925471</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -705,7 +714,8 @@
     <MESSAGE value="Added Outputs" />
     <MESSAGE value="Added get_terminals and added an UNKNOWN terminal state" />
     <MESSAGE value="Updated zones logic and big refactoring" />
-    <option name="LAST_COMMIT_MESSAGE" value="Updated zones logic and big refactoring" />
+    <MESSAGE value="Fix zone print" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix zone print" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/inim_prime_native$partitions.coverage" NAME="partitions Coverage Results" MODIFIED="1784899381119" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />

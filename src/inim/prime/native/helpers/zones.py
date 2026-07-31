@@ -102,7 +102,7 @@ async def initialize_zones(
     zones: dict[int, Terminal] = {}
     terminals = await initialize_terminals(protocol, ZONE_TERMINAL_IDS_INTERVAL, pin)
     zone_labels = await get_zone_labels(protocol, ZONE_IDS_INTERVAL)
-    zone_settings = await get_zone_settings(protocol, ZONE_TERMINAL_IDS_INTERVAL)
+    zone_settings = await get_zone_settings(protocol, ZONE_IDS_INTERVAL)
 
     for idx, terminal in terminals.items():
         if terminal.terminal_status is not None:
