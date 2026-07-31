@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum
+from typing import Self, ClassVar
 
 
 class ArmingStatus(IntEnum):
@@ -8,9 +9,13 @@ class ArmingStatus(IntEnum):
     ARM_INSTANT = 3
     DISARMED = 4
 
-
 @dataclass(frozen = True)
 class PartitionStatus:
+    ### Constants
+    RAW_SIZE: ClassVar[int] = 3
+    # CONFIGURED_MASK: ClassVar[int] = 0x10
+    ALARM_MASK: ClassVar[int] = 0x01
+
     arming_status: ArmingStatus
     alarm: bool
     alarm_memory: bool
@@ -18,6 +23,37 @@ class PartitionStatus:
     sabotage_memory: bool | None
     raw: bytes
 
+    @classmethod
+    def decode(
+            cls,
+            raw: bytes
+    ) -> Self | None:
+        if raw == bytes(cls.RAW_SIZE): # If all bytes are 0s
+            return None
+        else:
+            arming_status = cls.decode_arming_status_byte(raw[1])
+            alarm = cls.decode_alarm_byte(raw[2])
+
+            return cls(
+                arming_status = arming_status,
+                alarm = alarm,
+                alarm_memory = alarm,
+                sabotage = None,
+                sabotage_memory = None,
+                raw = raw,
+            )
+
+    @staticmethod
+    def decode_arming_status_byte(
+            byte: int
+    ):
+        return ArmingStatus(byte)
+
+    @staticmethod
+    def decode_alarm_byte(
+            byte: int
+    ):
+        return bool(byte & PartitionStatus.ALARM_MASK)
 
 @dataclass
 class Partition:

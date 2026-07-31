@@ -6,27 +6,26 @@ from inim.prime.native.operations.partitions.get_partition_statuses import get_p
 from inim.prime.native.wire import Protocol
 
 
-async def get_partitions(
-    protocol: Protocol,
-    ids: set[int],
-    pin: str | None = None,
+async def initialize_partitions(
+        protocol: Protocol,
+        pin: str | None = None,
 ) -> dict[int, Partition]:
-    partition_labels, partition_statuses = await asyncio.gather(
-        get_partition_labels(protocol),
-        get_partition_statuses(protocol, pin),
-    )
-
     partitions: dict[int, Partition] = {}
 
-    for idx in ids:
-        label = partition_labels.get(idx)
-        if label is not None:
-            partitions[idx] = Partition(
-                id = idx,
-                label = label,
-                status = partition_statuses.get(idx),
-            )
+    partition_statuses, partition_labels = await asyncio.gather(
+        get_partition_statuses(protocol, pin),
+        get_partition_labels(protocol),
+    )
+
+    for partition_id, partition_status in partition_statuses.items():
+        partitions[partition_id] = Partition(
+            id = partition_id,
+            label = partition_labels[partition_id],
+            status = partition_status,
+        )
+
     return partitions
+
 
 async def update_partition_statuses(
     protocol: Protocol,

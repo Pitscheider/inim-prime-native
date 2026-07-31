@@ -1,17 +1,7 @@
 from typing import Final
 
 from inim.prime.native.models import ArmingStatus
+from inim.prime.native.utils import Interval
 
-PARTITIONS_MAX_NUMBER: Final[int] = 30
-LAST_PARTITION_ID: Final[int] = PARTITIONS_MAX_NUMBER - 1
-
-ARMING_STATUS_MAP = {
-    0x01: ArmingStatus.ARM_AWAY,
-    0x02: ArmingStatus.ARM_STAY,
-    0x03: ArmingStatus.ARM_INSTANT,
-    0x04: ArmingStatus.DISARMED,
-}
-
-ARMING_STATUS_REVERSE_MAP = {
-    value: key for key, value in ARMING_STATUS_MAP.items()
-}
+PARTITION_IDS_INTERVAL: Final[Interval] = Interval(0, 29)
+PARTITIONS_NUMBER: Final[int] = PARTITION_IDS_INTERVAL.size

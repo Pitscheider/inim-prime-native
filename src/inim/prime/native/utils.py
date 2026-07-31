@@ -102,6 +102,14 @@ class Interval:
     start: int
     end: int  # inclusive
 
+    @property
+    def size(self) -> int:
+        return self.end - self.start + 1
+
+    @property
+    def end_exclusive(self) -> int:
+        return self.end + 1
+
 def validate_interval(interval: Interval, bounds: Interval):
     if interval.start < bounds.start:
         raise ValueError(f"{interval.start} must be >= {bounds.start}")

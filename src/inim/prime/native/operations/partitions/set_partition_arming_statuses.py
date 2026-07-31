@@ -2,7 +2,7 @@ from typing import Final
 
 from inim.prime.native.const import CommandOperation
 from inim.prime.native.models import ArmingStatus
-from inim.prime.native.operations.partitions.const import PARTITIONS_MAX_NUMBER, ARMING_STATUS_REVERSE_MAP
+from inim.prime.native.operations.partitions.const import PARTITION_IDS_INTERVAL
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
 
@@ -12,10 +12,10 @@ COMMAND_OPERATION: Final[CommandOperation] = CommandOperation.SET_ARMING_STATUS
 
 ### Functions
 def assemble_data(arming_statuses: dict[int, ArmingStatus]) -> bytes:
-    command_data = bytearray(PARTITIONS_MAX_NUMBER)
+    command_data = bytearray(PARTITION_IDS_INTERVAL.size)
 
-    for idx, arming_satus in arming_statuses.items():
-        command_data[idx] = ARMING_STATUS_REVERSE_MAP[arming_satus]
+    for idx, arming_status in arming_statuses.items():
+        command_data[idx] = arming_status
 
     return command_data
 

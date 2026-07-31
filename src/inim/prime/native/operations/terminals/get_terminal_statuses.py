@@ -1,7 +1,8 @@
 from typing import Final
 
 from inim.prime.native.const import Encoding, CommandOperation
-from inim.prime.native.models.terminals import TerminalType, TerminalStatus
+from inim.prime.native.models.terminals import TerminalStatus
+from inim.prime.native.operations.terminals.const import TERMINAL_IDS_INTERVAL
 from inim.prime.native.utils import encode_int, Interval
 from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
@@ -13,12 +14,6 @@ RESPONSE_PAYLOAD_DATA_LENGTH: Final[int] = TERMINAL_STATUS_SIZE * MAX_CHUNK_TERM
 COMMAND_OPERATION: Final[CommandOperation] = CommandOperation.GET_TERMINAL_STATUSES
 
 ### Functions
-def decode_terminal_type(raw_bytes: bytes) -> TerminalType:
-    # Check the first byte to determine terminal type
-    try:
-        return TerminalType(raw_bytes[0])
-    except ValueError:
-        return TerminalType.UNKNOWN
 
 
 def assemble_data(start_terminal: int, end_terminal: int) -> bytes:
@@ -47,7 +42,7 @@ def disassemble_payload(
     ):
         offset = idx * TERMINAL_STATUS_SIZE
         raw_status = response_data[offset:offset + TERMINAL_STATUS_SIZE]
-        terminal_type = decode_terminal_type(raw_status)
+        terminal_type = TerminalStatus.decode_type(raw_status)
 
         terminal_statuses[t_id] = TerminalStatus(
             raw = raw_status,
@@ -91,7 +86,7 @@ async def get_chunks(
 
 async def get_terminal_statuses(
         protocol: Protocol,
-        interval: Interval,
+        interval: Interval = TERMINAL_IDS_INTERVAL,
         pin: str | None = None,
 ) -> dict[int, TerminalStatus]:
     chunks = await get_chunks(

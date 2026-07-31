@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import Enum, auto, IntEnum
+from enum import auto, IntEnum
 
 
 class TerminalType(IntEnum):
@@ -14,13 +14,15 @@ class TerminalStatus:
     raw: bytes
     type: TerminalType
 
-    def __str__(self) -> str:
-        return (
-            f"TerminalStatus("
-            f"active={self.type.name}, "
-            f"raw={self.raw.hex(" ")}"
-            f")"
-        )
+    @staticmethod
+    def decode_type(
+            raw_bytes: bytes
+    ) -> TerminalType:
+        # Check the first byte to determine terminal type
+        try:
+            return TerminalType(raw_bytes[0])
+        except ValueError:
+            return TerminalType.UNKNOWN
 
 @dataclass
 class Terminal:
@@ -37,5 +39,8 @@ class Terminal:
         else:
             return (
                 f"ID={self.terminal_id}"
-                f"\n\tTerminal status: {None}"
+                f"\n\tTerminal status: None"
             )
+
+    def update_status(self, status: TerminalStatus | None):
+        self.terminal_status = status

@@ -1,13 +1,15 @@
 import asyncio
-from collections import defaultdict
-from typing import TypeVar
 
-from inim.prime.native.models.terminals import Terminal, TerminalStatus
-from inim.prime.native.operations.terminals.const import TERMINAL_IDS_INTERVAL
+from inim.prime.native.models.outputs import Output
+from inim.prime.native.models.terminals import Terminal, TerminalStatus, TerminalType
+from inim.prime.native.models.zones import SingleZone, DoubleZone
+from inim.prime.native.operations.outputs.get_output_labels import get_output_labels
 from inim.prime.native.operations.terminals.get_terminal_statuses import get_terminal_statuses
+from inim.prime.native.operations.zones.const import ZONE_1_ID_OFFSET
+from inim.prime.native.operations.zones.get_zone_labels import get_zone_labels
+from inim.prime.native.operations.zones.get_zone_settings import get_zone_settings
 from inim.prime.native.utils import Interval, make_intervals
 from inim.prime.native.wire import Protocol
-
 
 
 async def get_terminal_statuses_by_intervals(
@@ -17,57 +19,81 @@ async def get_terminal_statuses_by_intervals(
 ) -> dict[int, TerminalStatus]:
     terminal_statuses: dict[int, TerminalStatus] = {}
 
-    for interval in intervals:
-        terminal_statuses |= await get_terminal_statuses(protocol, interval, pin)
+    results = await asyncio.gather(
+        *(get_terminal_statuses(protocol, interval, pin) for interval in intervals)
+    )
+
+    for result in results:
+        terminal_statuses |= result
 
     return terminal_statuses
 
+
 async def initialize_terminals(
         protocol: Protocol,
-        interval: Interval = TERMINAL_IDS_INTERVAL,
         pin: str | None = None,
-) -> dict[int, Terminal]:
+) -> tuple[dict[int, Terminal], list[Interval]]:
     terminals: dict[int, Terminal] = {}
-    terminal_statuses = await get_terminal_statuses(protocol, interval, pin)
 
-    for idx, terminal_status in terminal_statuses.items():
-        terminals[idx] = Terminal(
-            terminal_id = idx,
-            terminal_status = terminal_status,
-        )
+    terminal_statuses, zone_labels, zone_settings, output_labels = await asyncio.gather(
+        get_terminal_statuses(protocol, pin = pin),
+        get_zone_labels(protocol),
+        get_zone_settings(protocol),
+        get_output_labels(protocol)
+    )
 
-    return terminals
+    for terminal_id, terminal_status in terminal_statuses.items():
+        if terminal_status.type == TerminalType.SINGLE_ZONE:
+            zone_id = terminal_id
 
-# async def get_terminals_intervals_by_state(
-#     protocol: Protocol,
-#     pin: str | None = None,
-# ) -> dict[TerminalState, list[Interval]]:
-#     t_statuses = await get_terminal_statuses(protocol, pin=pin)
-#
-#     ids_by_state: dict[TerminalState, list[int]] = defaultdict(list)
-#
-#     for t_id, status in t_statuses.items():
-#         ids_by_state[status.state].append(t_id)
-#
-#     return {
-#         state: make_intervals(ids)
-#         for state, ids in ids_by_state.items()
-#     }
+            terminals[terminal_id] = SingleZone.decode(
+                terminal_id = terminal_id,
+                terminal_status = terminal_status,
+                zone_id = zone_id,
+                zone_label = zone_labels[zone_id],
+                zone_setting = zone_settings[zone_id],
+            )
+
+        elif terminal_status.type == TerminalType.DOUBLE_ZONE:
+            zone_0_id = terminal_id
+            zone_1_id = terminal_id + ZONE_1_ID_OFFSET
+
+            terminals[terminal_id] = DoubleZone.decode(
+                terminal_id = terminal_id,
+                terminal_status = terminal_status,
+                zone_0_id = zone_0_id,
+                zone_0_label = zone_labels[zone_0_id],
+                zone_0_setting = zone_settings[zone_0_id],
+                zone_1_id = zone_1_id,
+                zone_1_label = zone_labels[zone_1_id],
+                zone_1_setting = zone_settings[zone_1_id],
+            )
+
+        elif terminal_status.type == TerminalType.OUTPUT:
+            terminals[terminal_id] = Output.decode(
+                terminal_id = terminal_id,
+                terminal_status = terminal_status,
+                label = output_labels[terminal_id],
+            )
+
+    intervals: list[Interval] = make_intervals(
+        list(terminals.keys())
+    )
+
+    return terminals, intervals
 
 
-T = TypeVar("T", bound=Terminal)
-
-async def update_terminal_statuses_by_intervals(
+async def update_terminal_statuses(
     protocol: Protocol,
-    terminals: dict[int, T],
+    terminals: dict[int, Terminal],
     intervals: list[Interval],
     pin: str | None = None,
-) -> dict[int, T]:
+) -> dict[int, Terminal]:
     terminal_statuses = await get_terminal_statuses_by_intervals(
         protocol, intervals, pin
     )
 
     for terminal in terminals.values():
-        terminal.terminal_status = terminal_statuses.get(terminal.terminal_id)
+        terminal.update_status(terminal_statuses.get(terminal.terminal_id))
 
     return terminals
