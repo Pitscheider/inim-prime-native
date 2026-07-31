@@ -1,3 +1,5 @@
+import asyncio
+
 from inim.prime.native.const import Encoding
 from inim.prime.native.helpers.terminals import update_terminal_statuses_by_intervals, initialize_terminals
 from inim.prime.native.models.terminals import Terminal, TerminalType
@@ -100,9 +102,12 @@ async def initialize_zones(
         pin: str | None = None,
 ):
     zones: dict[int, Terminal] = {}
-    terminals = await initialize_terminals(protocol, ZONE_TERMINAL_IDS_INTERVAL, pin)
-    zone_labels = await get_zone_labels(protocol, ZONE_IDS_INTERVAL)
-    zone_settings = await get_zone_settings(protocol, ZONE_IDS_INTERVAL)
+
+    terminals, zone_labels, zone_settings = await asyncio.gather(
+        initialize_terminals(protocol, ZONE_TERMINAL_IDS_INTERVAL, pin),
+        get_zone_labels(protocol, ZONE_IDS_INTERVAL),
+        get_zone_settings(protocol, ZONE_IDS_INTERVAL),
+    )
 
     for idx, terminal in terminals.items():
         if terminal.terminal_status is not None:
