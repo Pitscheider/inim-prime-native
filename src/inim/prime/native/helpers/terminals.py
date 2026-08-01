@@ -9,7 +9,7 @@ from inim.prime.native.operations.zones.const import ZONE_1_ID_OFFSET
 from inim.prime.native.operations.zones.get_zone_labels import get_zone_labels
 from inim.prime.native.operations.zones.get_zone_settings import get_zone_settings
 from inim.prime.native.utils import Interval, make_intervals
-from inim.prime.native.wire import Protocol
+from inim.prime.native.wire.protocol import Protocol
 
 
 async def get_terminal_statuses_by_intervals(

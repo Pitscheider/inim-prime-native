@@ -1,10 +1,10 @@
 from typing import Final
 
 from inim.prime.native.const import CommandOperation
-from inim.prime.native.models import ArmingStatus
+from inim.prime.native.models.partitions import ArmingStatus
 from inim.prime.native.operations.partitions.const import PARTITION_IDS_INTERVAL
-from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
+from inim.prime.native.wire.protocol import Protocol
 
 ### Constants
 COMMAND_OPERATION: Final[CommandOperation] = CommandOperation.SET_ARMING_STATUS

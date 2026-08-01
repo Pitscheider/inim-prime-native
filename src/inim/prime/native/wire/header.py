@@ -86,13 +86,13 @@ class OuterHeader(Header):
     @classmethod
     def from_bytes(
             cls,
-            outer_header: bytes
+            header: bytes
     ) -> Self:
         return cls(
-            magic = outer_header[cls.Layout.magic],
-            padding = outer_header[cls.Layout.padding],
-            inner_frame_length = outer_header[cls.Layout.inner_frame_length],
-            response_inner_frame_length = outer_header[cls.Layout.response_inner_frame_length],
+            magic = header[cls.Layout.magic],
+            padding = header[cls.Layout.padding],
+            inner_frame_length = header[cls.Layout.inner_frame_length],
+            response_inner_frame_length = header[cls.Layout.response_inner_frame_length],
         )
 
 
@@ -235,13 +235,13 @@ class InnerHeader(Header):
     @classmethod
     def from_bytes(
             cls,
-            inner_header: bytes
+            header: bytes
     ) -> Self:
         return cls(
-            magic = inner_header[cls.Layout.magic],
-            crc = inner_header[cls.Layout.crc],
-            operation = inner_header[cls.Layout.operation],
-            inner_frame_length = inner_header[cls.Layout.inner_frame_length],
+            magic = header[cls.Layout.magic],
+            crc = header[cls.Layout.crc],
+            operation = header[cls.Layout.operation],
+            inner_frame_length = header[cls.Layout.inner_frame_length],
         )
 
 

@@ -4,7 +4,7 @@ from inim.prime.native.const import Address, Encoding
 from inim.prime.native.models.zones import ZoneSetting
 from inim.prime.native.operations.zones.const import ZONE_IDS_INTERVAL
 from inim.prime.native.utils import Interval, decode_int
-from inim.prime.native.wire import Protocol
+from inim.prime.native.wire.protocol import Protocol
 
 ### Constants
 ZONE_SETTING_SIZE: Final[int] = 11

@@ -2,16 +2,15 @@ import asyncio
 from collections import defaultdict
 
 from inim.prime.native.models.partitions import Partition
-from inim.prime.native.models.terminals import Terminal
-from inim.prime.native.models.zones import Zone, ZoneTerminal
+from inim.prime.native.models.zones import Zone
 from inim.prime.native.operations.partitions.get_partition_labels import get_partition_labels
 from inim.prime.native.operations.partitions.get_partition_statuses import get_partition_statuses
-from inim.prime.native.wire import Protocol
+from inim.prime.native.wire.protocol import Protocol
 
 
 async def initialize_partitions(
         protocol: Protocol,
-        partition_zones: dict[int, set[Zone]],
+        zone_ids_by_partition: dict[int, set[int]],
         pin: str | None = None,
 ) -> dict[int, Partition]:
     partitions: dict[int, Partition] = {}
@@ -26,7 +25,7 @@ async def initialize_partitions(
             _partition_id = partition_id,
             _label = partition_labels[partition_id],
             status = partition_status,
-            _zones = partition_zones.get(partition_id, set()),
+            _zones = zone_ids_by_partition.get(partition_id, set()),
         )
 
     return partitions
@@ -45,17 +44,13 @@ async def update_partition_statuses(
     return partitions
 
 
-def get_zones_by_partition(
-    terminals: dict[int, Terminal],
-) -> dict[int, set[Zone]]:
-    partitions: defaultdict[int, set[Zone]] = defaultdict(set)
+def get_zone_ids_by_partition(
+    zones: dict[int, Zone],
+) -> dict[int, set[int]]:
+    partitions: defaultdict[int, set[int]] = defaultdict(set)
 
-    for terminal in terminals.values():
-        if not isinstance(terminal, ZoneTerminal):
-            continue
-
-        for zone in terminal.zones:
-            for partition in zone.zone_setting.partitions:
-                partitions[partition].add(zone)
+    for zone in zones.values():
+        for partition in zone.zone_setting.partitions:
+            partitions[partition].add(zone.zone_id)
 
     return dict(partitions)

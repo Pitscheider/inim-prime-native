@@ -1,19 +1,18 @@
 import asyncio
 
 from inim.prime.native import operations
-from inim.prime.native.helpers.partitions import initialize_partitions, update_partition_statuses, get_zones_by_partition
+from inim.prime.native.helpers.partitions import initialize_partitions, update_partition_statuses, get_zone_ids_by_partition
 from inim.prime.native.helpers.terminals import initialize_terminals, update_terminal_statuses
-from inim.prime.native.models import ArmingStatus
-from inim.prime.native.models.partitions import Partition
+from inim.prime.native.models.partitions import Partition, ArmingStatus
 from inim.prime.native.models.terminals import Terminal
 from inim.prime.native.models.zones import ZoneTerminal
 from inim.prime.native.operations.outputs.set_output_status import set_output_status as set_output_status_op
 from inim.prime.native.operations.partitions.reset_partition_alarm_memories import reset_partition_memories as reset_partitions_op
 from inim.prime.native.operations.zones.set_zone_bypass import set_zone_bypass as set_zone_bypass_op
 from inim.prime.native.utils import Interval
-from inim.prime.native.wire import Cipher
-from inim.prime.native.wire import Protocol
+from inim.prime.native.wire.cipher import Cipher
 from inim.prime.native.wire.frame import Frame, OuterFrame, InnerFrame
+from inim.prime.native.wire.protocol import Protocol
 from tools.filters import PacketFilter
 from tools.packets import Packet, load_packets, decrypt_packets
 from tools.utils import Config, get_yaml_config
@@ -310,7 +309,7 @@ async def ensure_partitions(protocol: Protocol):
 
     if partitions is None:
         await protocol.connect()
-        partition_zones = get_zones_by_partition(terminals)
+        partition_zones = get_zone_ids_by_partition(terminals)
         partitions = await initialize_partitions(protocol, partition_zones)
         protocol.disconnect()
 

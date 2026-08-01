@@ -2,8 +2,8 @@ from typing import Final
 
 from inim.prime.native.const import Encoding, CommandOperation
 from inim.prime.native.utils import encode_int
-from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
+from inim.prime.native.wire.protocol import Protocol
 
 ### Constants
 COMMAND_OPERATION: Final[CommandOperation] = CommandOperation.RESET_PARTITIONS

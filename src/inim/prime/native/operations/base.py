@@ -1,6 +1,4 @@
-from typing import Final
-
-from inim.prime.native.const import AddressTable, Encoding, CommandOperation, Memory
+from inim.prime.native.const import AddressTable, Encoding, Memory
 from inim.prime.native.utils import decode_int, Interval
 from inim.prime.native.wire.protocol import Protocol
 

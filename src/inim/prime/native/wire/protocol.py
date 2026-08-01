@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Final, Self
 
-from inim.prime.native.const import CommandOperation, Panel, FrameOperation
+from inim.prime.native.const import CommandOperation, FrameOperation
 from .cipher import Cipher
 from .frame import OuterFrame, InnerFrame, Frame
 from .payload import ReadRequestPayload, ReadResponsePayload, CommandWithPinRequestPayload, ChecksummedPayload, \

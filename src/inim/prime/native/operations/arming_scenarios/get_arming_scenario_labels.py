@@ -2,7 +2,7 @@ from inim.prime.native.const import Memory, Address
 from inim.prime.native.operations.arming_scenarios.const import LAST_ARMING_SCENARIO_ID
 from inim.prime.native.operations.base import get_labels
 from inim.prime.native.utils import Interval
-from inim.prime.native.wire import Protocol
+from inim.prime.native.wire.protocol import Protocol
 
 
 async def get_arming_scenario_labels(

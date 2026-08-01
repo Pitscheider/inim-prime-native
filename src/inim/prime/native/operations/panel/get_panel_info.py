@@ -2,8 +2,9 @@ from typing import Final
 
 from inim.prime.native.const import CommandOperation
 from inim.prime.native.utils import next_slice
-from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandRequestPayload
+from inim.prime.native.wire.protocol import Protocol
+
 
 ### Constants
 class Layout:

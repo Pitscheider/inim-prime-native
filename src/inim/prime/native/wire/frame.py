@@ -177,15 +177,15 @@ class InnerFrame(Frame):
         return inner_frame
 
     @classmethod
-    def from_bytes(cls, inner_frame_bytes: bytes) -> Self:
+    def from_bytes(cls, frame_bytes: bytes) -> Self:
         """
         Parses a raw bytes frame into an InnerFrame instance.
         Does not validate the inner frame.
-        :param inner_frame_bytes:   Raw bytes of the inner frame to parse.
+        :param frame_bytes:   Raw bytes of the inner frame to parse.
         :return:                    The constructed inner frame object.
         """
-        inner_header = inner_frame_bytes[cls.Layout.inner_header]
-        encrypted_payload = inner_frame_bytes[cls.Layout.encrypted_payload]
+        inner_header = frame_bytes[cls.Layout.inner_header]
+        encrypted_payload = frame_bytes[cls.Layout.encrypted_payload]
 
         return cls(
             header = InnerHeader.from_bytes(inner_header),
@@ -402,15 +402,15 @@ class OuterFrame(Frame):
         return frame
 
     @classmethod
-    def from_bytes(cls, outer_frame_bytes: bytes) -> Self:
+    def from_bytes(cls, frame_bytes: bytes) -> Self:
         """
         Parses a raw bytes outer frame into a OuterFrame instance.
         Does not validate the frame.
-        :param outer_frame_bytes:     Raw bytes of the outer frame to parse.
+        :param frame_bytes:     Raw bytes of the outer frame to parse.
         :return:                The constructed frame object.
         """
-        outer_header = outer_frame_bytes[cls.Layout.outer_header]
-        inner_frame = outer_frame_bytes[cls.Layout.inner_frame]
+        outer_header = frame_bytes[cls.Layout.outer_header]
+        inner_frame = frame_bytes[cls.Layout.inner_frame]
 
         return cls(
             header = OuterHeader.from_bytes(outer_header),

@@ -1,11 +1,10 @@
 from typing import Final
 
 from inim.prime.native.const import CommandOperation
-from inim.prime.native.models import PartitionStatus
+from inim.prime.native.models.partitions import PartitionStatus
 from inim.prime.native.operations.partitions.const import PARTITIONS_NUMBER
-from inim.prime.native.wire import Protocol
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
-
+from inim.prime.native.wire.protocol import Protocol
 
 ### Constants
 
