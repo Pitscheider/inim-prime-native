@@ -8,10 +8,15 @@ from inim.prime.native.utils import decode_int
 
 @dataclass(frozen = True)
 class OutputStatus:
+    ### Constants
     STATUS_ENABLED: ClassVar[int] = 0x01
 
+
+    ### Attributes
     state: bool
 
+
+    ### Static methods
     @staticmethod
     def decode_state(
             raw_bytes: bytes,
@@ -21,12 +26,22 @@ class OutputStatus:
             return True
         return False
 
+
+
 @dataclass
 class Output(Terminal):
-
-    label: str
+    ### Attributes
+    _label: str
     output_status: OutputStatus | None
 
+
+    ### Properties
+    @property
+    def label(self) -> str:
+        return self._label
+
+
+    ### Constructors
     @classmethod
     def decode(
             cls,
@@ -41,24 +56,16 @@ class Output(Terminal):
         )
 
         output = cls(
-            terminal_id = terminal_id,
+            _terminal_id = terminal_id,
             terminal_status = terminal_status,
-            label = label,
+            _label = label,
             output_status = output_status,
         )
 
         return output
 
-    def update_status(self, status: TerminalStatus | None):
-        super().update_status(status)
 
-        if self.terminal_status is not None:
-            self.output_status = OutputStatus(
-                state = OutputStatus.decode_state(self.terminal_status.raw),
-            )
-        else:
-            self.output_status = None
-
+    ### Special methods
     def __str__(self) -> str:
         if self.output_status is not None:
             return (
@@ -73,3 +80,14 @@ class Output(Terminal):
                 f"\n\tOutput state: None"
             )
 
+
+    ### Methods
+    def update_status(self, status: TerminalStatus | None):
+        super().update_status(status)
+
+        if self.terminal_status is not None:
+            self.output_status = OutputStatus(
+                state = OutputStatus.decode_state(self.terminal_status.raw),
+            )
+        else:
+            self.output_status = None

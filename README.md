@@ -39,7 +39,7 @@ The goal is to provide a Home Assistant integration that communicates with Inim 
 - `get_partition_statuses` — current armed mode and alarm state per partition
 - `get_partitions` — combined names and statuses
 - `set_partition_arming_statuses` — arm or disarm partitions (total, partial, instant, disarmed)
-- `reset_partitions` — reset partition alarm state
+- `reset_partition_memories` — reset partition alarm state
 - `resolve_address` — internal address indirection lookup
 
 **Developer tools** (`tools/`)

@@ -8,7 +8,7 @@ from inim.prime.native.models.partitions import Partition
 from inim.prime.native.models.terminals import Terminal
 from inim.prime.native.models.zones import ZoneTerminal
 from inim.prime.native.operations.outputs.set_output_status import set_output_status as set_output_status_op
-from inim.prime.native.operations.partitions.reset_partitions import reset_partitions as reset_partitions_op
+from inim.prime.native.operations.partitions.reset_partition_alarm_memories import reset_partition_memories as reset_partitions_op
 from inim.prime.native.operations.zones.set_zone_bypass import set_zone_bypass as set_zone_bypass_op
 from inim.prime.native.utils import Interval
 from inim.prime.native.wire import Cipher
@@ -207,7 +207,7 @@ async def reset_partitions(protocol: Protocol, pin: str):
 
         print(f"Added: partition {idx}")
 
-    await operations.partitions.reset_partitions(protocol, partition_ids, pin)
+    await operations.partitions.reset_partition_memories(protocol, partition_ids, pin)
     await asyncio.sleep(1)
     await get_partitions(protocol)
     protocol.disconnect()

@@ -2,7 +2,7 @@ from typing import Final
 
 from inim.prime.native.const import Address, Encoding
 from inim.prime.native.models.zones import ZoneSetting
-from inim.prime.native.operations.zones.const import ZONE_TERMINAL_IDS_INTERVAL, ZONE_IDS_INTERVAL
+from inim.prime.native.operations.zones.const import ZONE_IDS_INTERVAL
 from inim.prime.native.utils import Interval, decode_int
 from inim.prime.native.wire import Protocol
 

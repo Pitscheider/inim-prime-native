@@ -4,11 +4,19 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0c904636-8b4a-4c5f-878c-ed2f9cba7311" name="Changes" comment="Corrected alarm status for partitions">
+    <list default="true" id="0c904636-8b4a-4c5f-878c-ed2f9cba7311" name="Changes" comment="Now partitions have zones">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/inim/prime/native/helpers/partitions.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/helpers/partitions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/outputs.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/outputs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/partitions.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/partitions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/terminals.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/terminals.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/inim/prime/native/models/zones.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/models/zones.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/reset_partitions.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/partitions/reset_partition_alarm_memories.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/terminals/const.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/get_zone_settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/inim/prime/native/operations/zones/get_zone_settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tools/repl.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/repl.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -80,9 +88,9 @@
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/data/captures" />
       <recent name="$PROJECT_DIR$/src/inim/prime/native/operations/outputs" />
       <recent name="$PROJECT_DIR$/src/inim/prime/native/operations/zones" />
-      <recent name="$PROJECT_DIR$/data/captures" />
       <recent name="$PROJECT_DIR$/src/inim/prime/native/operations/terminals" />
       <recent name="$PROJECT_DIR$/src/inim/prime/native/operations" />
     </key>
@@ -470,7 +478,8 @@
       <workItem from="1785270850726" duration="890000" />
       <workItem from="1785487478117" duration="17547000" />
       <workItem from="1785509607543" duration="1234000" />
-      <workItem from="1785524240256" duration="3973000" />
+      <workItem from="1785524240256" duration="4115000" />
+      <workItem from="1785569851459" duration="5058000" />
     </task>
     <task id="LOCAL-00001" summary="Refactor">
       <option name="closed" value="true" />
@@ -720,7 +729,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785525564486</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="Now partitions have zones">
+      <option name="closed" value="true" />
+      <created>1785528346054</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1785528346054</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -761,24 +778,15 @@
     <MESSAGE value="Optimized zone initialization using asyncio.gather" />
     <MESSAGE value="Massive update to partitions, terminals, and repl" />
     <MESSAGE value="Corrected alarm status for partitions" />
-    <option name="LAST_COMMIT_MESSAGE" value="Corrected alarm status for partitions" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/inim/prime/native/operations/partitions/get_partition_labels.py</url>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="Now partitions have zones" />
+    <option name="LAST_COMMIT_MESSAGE" value="Now partitions have zones" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/inim_prime_native$partitions.coverage" NAME="partitions Coverage Results" MODIFIED="1784899381119" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
     <SUITE FILE_PATH="coverage/inim_prime_native$zones.coverage" NAME="zones Coverage Results" MODIFIED="1784811105932" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
     <SUITE FILE_PATH="coverage/inim_prime_native$get_output_labels.coverage" NAME="get_output_labels Coverage Results" MODIFIED="1785496923600" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/operations/outputs" />
-    <SUITE FILE_PATH="coverage/inim_prime_native$test.coverage" NAME="test Coverage Results" MODIFIED="1785504270760" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/local" />
-    <SUITE FILE_PATH="coverage/inim_prime_native$repl.coverage" NAME="repl Coverage Results" MODIFIED="1785528047009" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/inim_prime_native$test.coverage" NAME="test Coverage Results" MODIFIED="1785570291835" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/local" />
+    <SUITE FILE_PATH="coverage/inim_prime_native$repl.coverage" NAME="repl Coverage Results" MODIFIED="1785578969750" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/inim_prime_native$terminals.coverage" NAME="terminals Coverage Results" MODIFIED="1784729328171" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/inim/prime/native/helpers" />
   </component>
 </project>

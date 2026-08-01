@@ -1,8 +1,6 @@
-from enum import StrEnum, auto
 from typing import Final
 
 from inim.prime.native.utils import Interval
-
 
 # class TerminalType(StrEnum):
 #     PANEL = auto()

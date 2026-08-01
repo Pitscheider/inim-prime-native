@@ -28,7 +28,7 @@ def assemble_payload(partition_ids: set[int], pin: str | None = None) -> bytes:
     )
 
 
-async def reset_partitions(
+async def reset_partition_memories(
         protocol: Protocol,
         partition_ids: set[int],
         pin: str | None = None,

@@ -9,11 +9,15 @@ class TerminalType(IntEnum):
     DISABLED = 4
     UNKNOWN = auto()
 
+
+
 @dataclass(frozen = True)
 class TerminalStatus:
+    ### Attributes
     raw: bytes
     type: TerminalType
 
+    ### Static methods
     @staticmethod
     def decode_type(
             raw_bytes: bytes
@@ -24,10 +28,30 @@ class TerminalStatus:
         except ValueError:
             return TerminalType.UNKNOWN
 
+
+
 @dataclass
 class Terminal:
-    terminal_id: int
+    ### Attributes
+    _terminal_id: int
     terminal_status: TerminalStatus | None
+
+
+    ### Properties
+    @property
+    def terminal_id(self) -> int:
+        return self._terminal_id
+
+
+    ### Special methods
+    def __hash__(self) -> int:
+        return hash(self.terminal_id)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Terminal):
+            return NotImplemented
+
+        return self.terminal_id == other.terminal_id
 
     def __str__(self) -> str:
         if self.terminal_status is not None:
@@ -42,5 +66,7 @@ class Terminal:
                 f"\n\tTerminal status: None"
             )
 
+
+    ### Methods
     def update_status(self, status: TerminalStatus | None):
         self.terminal_status = status

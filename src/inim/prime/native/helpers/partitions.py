@@ -23,10 +23,10 @@ async def initialize_partitions(
 
     for partition_id, partition_status in partition_statuses.items():
         partitions[partition_id] = Partition(
-            id = partition_id,
-            label = partition_labels[partition_id],
+            _partition_id = partition_id,
+            _label = partition_labels[partition_id],
             status = partition_status,
-            zones = partition_zones.get(partition_id, set()),
+            _zones = partition_zones.get(partition_id, set()),
         )
 
     return partitions
