@@ -1,18 +1,10 @@
 import asyncio
 
-from inim.prime.native import operations
-from inim.prime.native.helpers.partitions import initialize_partitions, update_partition_statuses, get_zone_ids_by_partition
-from inim.prime.native.helpers.terminals import initialize_terminals, update_terminal_statuses
-from inim.prime.native.models.partitions import Partition, ArmingStatus
-from inim.prime.native.models.terminals import Terminal
+from inim.prime.native.client import Client
+from inim.prime.native.models.partitions import ArmingStatus
 from inim.prime.native.models.zones import ZoneTerminal
-from inim.prime.native.operations.outputs.set_output_status import set_output_status as set_output_status_op
-from inim.prime.native.operations.partitions.reset_partition_alarm_memories import reset_partition_memories as reset_partitions_op
-from inim.prime.native.operations.zones.set_zone_bypass import set_zone_bypass as set_zone_bypass_op
-from inim.prime.native.utils import Interval
 from inim.prime.native.wire.cipher import Cipher
 from inim.prime.native.wire.frame import Frame, OuterFrame, InnerFrame
-from inim.prime.native.wire.protocol import Protocol
 from tools.filters import PacketFilter
 from tools.packets import Packet, load_packets, decrypt_packets
 from tools.utils import Config, get_yaml_config
@@ -32,7 +24,6 @@ Commands:
     set_filter                    – Apply a filter expression to loaded packets
     current_filter                – Show the active filter (and optionally clear it)
     help_filter                   – Show filter syntax reference
-    resolve_address               - Resolves an address by performing an indirection lookup
     
     PANEL OPERATIONS
     get_terminals                 - Print terminals info updated
@@ -109,32 +100,20 @@ def apply_filter(
         print(f"Invalid filter: {exc}")
         return packets, current_filter
 
-async def resolve_address(protocol: Protocol):
-    address = int(input("Index: "))
-    await protocol.connect()
-    response_address = await operations.resolve_address(protocol, address)
-    protocol.disconnect()
-
-    print(f"Resolved address: {response_address} ({hex(response_address)})")
 
 
+async def get_partitions(client: Client):
+    await client.ensure_initialized()
 
-async def get_partitions(protocol: Protocol):
-    await ensure_partitions(protocol)
-
-    global partitions
-
-    await protocol.connect()
-    assert partitions is not None
-    partitions = await update_partition_statuses(protocol, partitions)
-    protocol.disconnect()
+    partitions = await client.update_partitions()
 
     for p in partitions.values():
         print(p)
     print()
 
-async def set_arming_statuses(protocol: Protocol, pin: str | None):
-    await protocol.connect()
+async def set_arming_statuses(client: Client):
+    await client.ensure_initialized()
+
     arming_statuses: dict[int, ArmingStatus] = {}
 
     print("Enter partition index and mode.")
@@ -173,59 +152,26 @@ async def set_arming_statuses(protocol: Protocol, pin: str | None):
 
         print(f"Added: partition {idx} -> {arming_status.name}")
 
-    if pin is not None:
-        await operations.set_partition_arming_statuses(protocol, arming_statuses, pin)
-    else:
-        await operations.set_partition_arming_statuses(protocol, arming_statuses)
-    await asyncio.sleep(1)
-    await get_partitions(protocol)
-    protocol.disconnect()
+
+    await client.set_partition_arming_statuses(arming_statuses)
+    await get_partitions(client)
 
 
-async def reset_partitions(protocol: Protocol, pin: str):
-    await protocol.connect()
 
-    partition_ids: set[int] = set()
+async def get_panel_info(client: Client):
+    await client.ensure_initialized()
 
-    print("Enter partition values to reset.")
-    print("Type 'q' at any prompt to finish.\n")
-
-    while True:
-        idx_input = input("\nPartition index: ").strip()
-
-        if idx_input.lower() == 'q':
-            break
-
-        try:
-            idx = int(idx_input)
-        except ValueError:
-            print("Invalid partition index")
-            continue
-
-        partition_ids.add(idx)
-
-        print(f"Added: partition {idx}")
-
-    await operations.partitions.reset_partition_memories(protocol, partition_ids, pin)
-    await asyncio.sleep(1)
-    await get_partitions(protocol)
-    protocol.disconnect()
-
-async def get_panel_info(protocol: Protocol):
-    await protocol.connect()
-
-    serial_number, firmware, model = await operations.panel.get_panel_info(protocol)
+    serial_number, firmware, model = client.panel_info
 
     print(f"Serial number: {serial_number}")
     print(f"Firmware: {firmware}")
     print(f"Model: {model}")
     print()
 
-    protocol.disconnect()
 
+async def set_zone_bypass(client: Client):
+    await client.ensure_initialized()
 
-async def set_zone_bypass(protocol: Protocol):
-    await protocol.connect()
     idx = int(input("Zone ID: "))
     bypass = input("Bypass [True/False]: ")
     if bypass.lower() == "true":
@@ -234,17 +180,17 @@ async def set_zone_bypass(protocol: Protocol):
         bypass = False
     print(f"Chose {bypass}")
 
-    await set_zone_bypass_op(protocol, idx, bypass)
-    protocol.disconnect()
+    await client.set_zone_bypass(idx, bypass)
 
-async def rest_partition(protocol: Protocol):
-    await protocol.connect()
+
+async def rest_partition(client: Client):
+    await client.ensure_initialized()
     idx = int(input("Partition index: "))
-    await reset_partitions_op(protocol, {idx})
-    protocol.disconnect()
+    await client.reset_partition_memory(idx)
 
-async def set_output_status(protocol: Protocol):
-    await protocol.connect()
+async def set_output_status(client: Client):
+    await client.ensure_initialized()
+
     idx = int(input("Output ID: "))
     enable = input("Enable/Disable [True/False]: ")
     if enable.lower() == "true":
@@ -253,20 +199,13 @@ async def set_output_status(protocol: Protocol):
         enable = False
     print(f"Chose {enable}")
 
-    await set_output_status_op(protocol, idx, enable)
-    protocol.disconnect()
+    await client.set_output(idx, enable)
 
-async def get_terminals(protocol: Protocol):
-    global terminals, terminals_intervals, partitions
-    await ensure_partitions(protocol)
-    await ensure_terminals(protocol)
+async def get_terminals(client: Client):
+    await client.ensure_initialized()
 
-    await protocol.connect()
-    assert terminals is not None
-    assert terminals_intervals is not None
-    assert partitions is not None
-
-    terminals = await update_terminal_statuses(protocol, terminals, terminals_intervals)
+    terminals = await client.update_terminals()
+    partitions = client.partitions
 
     partition_labels = {
         partition_id: partition.label
@@ -279,39 +218,9 @@ async def get_terminals(protocol: Protocol):
         else:
             print(terminal)
 
-    protocol.disconnect()
-
-
 # ---------------------------------------------------------------------------
 # REPL
 # ---------------------------------------------------------------------------
-terminals: dict[int, Terminal] | None = None
-terminals_intervals: list[Interval] | None = None
-partitions: dict[int, Partition] | None = None
-
-
-
-
-async def ensure_terminals(protocol: Protocol):
-    global terminals, terminals_intervals
-
-    if terminals is None:
-        await protocol.connect()
-        terminals, terminals_intervals = await initialize_terminals(protocol)
-        protocol.disconnect()
-
-
-async def ensure_partitions(protocol: Protocol):
-    global partitions, terminals
-
-    await ensure_terminals(protocol)
-    assert terminals is not None
-
-    if partitions is None:
-        await protocol.connect()
-        partition_zones = get_zone_ids_by_partition(terminals)
-        partitions = await initialize_partitions(protocol, partition_zones)
-        protocol.disconnect()
 
 async def repl(config: Config) -> None:
     packets: list[Packet] | None = None
@@ -319,16 +228,16 @@ async def repl(config: Config) -> None:
     active_filter: PacketFilter | None = None
     cipher = Cipher(config.password)
     frame_type: type[Frame] = OuterFrame if config.use_outer_frame else InnerFrame
-    protocol = Protocol(
-        host=config.host,
-        password=config.password,
-        port=config.port,
+
+    client = client = await Client(
+        host = config.host,
+        password = config.password,
         use_outer_frame = config.use_outer_frame,
-    )
+        port = config.port,
+        pin = config.pin,
+    ).connect()
 
     print_help()
-    global terminals, terminals_intervals, partitions
-
 
     handlers = {
         "help":                print_help,
@@ -344,9 +253,6 @@ async def repl(config: Config) -> None:
 
         elif choice in handlers:
             handlers[choice]()
-
-        elif choice == "resolve_address":
-            await resolve_address(protocol)
 
         elif choice == "load_packets":
             try:
@@ -385,20 +291,21 @@ async def repl(config: Config) -> None:
                     filtered_packets = packets
                     active_filter = None
                     print("Filter cleared.")
+
         elif choice == "get_partitions":
-            await get_partitions(protocol)
+            await get_partitions(client)
         elif choice == "set_partition_arming_statuses":
-            await set_arming_statuses(protocol, config.pin)
+            await set_arming_statuses(client)
         elif choice == "set_zone_bypass":
-            await set_zone_bypass(protocol)
+            await set_zone_bypass(client)
         elif choice == "set_output_status":
-            await set_output_status(protocol)
+            await set_output_status(client)
         elif choice == "reset_partition_memory":
-            await rest_partition(protocol)
+            await rest_partition(client)
         elif choice == "get_panel_info":
-            await get_panel_info(protocol)
+            await get_panel_info(client)
         elif choice == "get_terminals":
-            await get_terminals(protocol)
+            await get_terminals(client)
 
         else:
             print(f"Unknown command '{choice}'. Type 'help' for a list of commands.")

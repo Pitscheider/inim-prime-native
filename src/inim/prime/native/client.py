@@ -24,7 +24,7 @@ from inim.prime.native.operations.panel.get_panel_info import get_panel_info
 from inim.prime.native.operations.partitions.reset_partition_alarm_memories import reset_partition_memories
 from inim.prime.native.operations.partitions.set_partition_arming_statuses import set_partition_arming_statuses
 from inim.prime.native.operations.zones.set_zone_bypass import set_zone_bypass
-from inim.prime.native.utils import Interval
+from inim.prime.native.utils import Interval, make_intervals
 from inim.prime.native.wire.protocol import Protocol
 from inim.prime.native.wire.transport import Transport
 
@@ -56,7 +56,9 @@ class Client:
     serialised through an internal ``asyncio.Lock`` since the wire protocol
     is a single stateful TCP connection.
     """
-
+    ###
+    ### Attributes
+    ###
     __slots__ = (
         "_protocol",
         "_pin",
@@ -67,8 +69,13 @@ class Client:
         "_zone_to_terminal",
         "_zones",
         "_outputs",
+        "_output_intervals",
         "_single_zones",
+        "_single_zone_intervals",
         "_double_zones",
+        "_double_zone_intervals",
+        "_zone_terminals",
+        "_zone_terminal_intervals",
         "_partitions",
         "_serial_number",
         "_firmware",
@@ -76,7 +83,9 @@ class Client:
         "_initialized",
     )
 
+    ###
     ### Constructors
+    ###
     def __init__(
             self,
             host: str,
@@ -124,8 +133,13 @@ class Client:
         self._zone_to_terminal: dict[int, int] = {}
         self._zones: dict[int, Zone] = {}
         self._outputs: dict[int, Output] = {}
+        self._output_intervals: list[Interval] = []
         self._single_zones: dict[int, SingleZone] = {}
+        self._single_zone_intervals: list[Interval] = []
         self._double_zones: dict[int, DoubleZone] = {}
+        self._double_zone_intervals: list[Interval] = []
+        self._zone_terminals: dict[int, ZoneTerminal] = {}
+        self._zone_terminal_intervals: list[Interval] = []
         self._partitions: dict[int, Partition] = {}
 
         self._serial_number: str | None = None
@@ -134,9 +148,9 @@ class Client:
 
         self._initialized = False
 
-    # ------------------------------------------------------------------
-    # Connection lifecycle
-    # ------------------------------------------------------------------
+    ###
+    ### Connection lifecycle
+    ###
     @property
     def is_connected(self) -> bool:
         """:return: True if the TCP connection to the panel is active and not closing."""
@@ -167,9 +181,9 @@ class Client:
     async def __aexit__(self, *_: object) -> None:
         self.disconnect()
 
-    # ------------------------------------------------------------------
-    # Discovery / status refresh
-    # ------------------------------------------------------------------
+    ###
+    ### Initialization
+    ###
     async def initialize(self) -> None:
         """
         Performs full panel discovery: reads panel info, terminals (zones,
@@ -183,7 +197,7 @@ class Client:
         async with self._lock:
             serial_number, firmware, model = await get_panel_info(self._protocol)
 
-            terminals, intervals = await initialize_terminals(self._protocol, self._pin)
+            terminals = await initialize_terminals(self._protocol, self._pin)
 
             zone_to_terminal: dict[int, int] = {}
             zones: dict[int, Zone] = {}
@@ -210,39 +224,117 @@ class Client:
                 pin = self._pin,
             )
 
+            zone_terminals: dict[int, ZoneTerminal] = {**single_zones, **double_zones}
+
+            ### Intervals creation
+            terminal_intervals = make_intervals(sorted(terminals))
+            output_intervals = make_intervals(sorted(outputs))
+            single_zone_intervals = make_intervals(sorted(single_zones))
+            double_zone_intervals = make_intervals(sorted(double_zones))
+            zone_terminal_intervals = make_intervals(sorted(zone_terminals))
+
+            ### Attributes assignment
             self._serial_number = serial_number
             self._firmware = firmware
             self._model = model
             self._terminals = terminals
-            self._terminal_intervals = intervals
+            self._terminal_intervals = terminal_intervals
             self._zone_to_terminal = zone_to_terminal
             self._zones = zones
             self._outputs = outputs
+            self._output_intervals = output_intervals
             self._single_zones = single_zones
+            self._single_zone_intervals = single_zone_intervals
             self._double_zones = double_zones
+            self._double_zone_intervals = double_zone_intervals
+            self._zone_terminals = zone_terminals
+            self._zone_terminal_intervals = zone_terminal_intervals
             self._partitions = partitions
             self._initialized = True
 
+    async def ensure_initialized(self) -> None:
+        """
+        Performs full panel discovery via initialize() only if the client
+        hasn't been initialized yet; otherwise does nothing.
+
+        Handy for callers (e.g. a Home Assistant coordinator's first refresh)
+        that don't want to track initialization state themselves and can
+        just call this unconditionally before every operation.
+
+        Note: if this is awaited concurrently from multiple coroutines before
+        the first initialize() has completed, more than one of them may
+        observe is_initialized as False and each call initialize() in turn -
+        harmless (initialize() is idempotent and re-acquires the lock each
+        time) but wasteful. Prefer calling this once during setup rather than
+        from every hot-path method if that matters to you.
+        """
+        if not self._initialized:
+            await self.initialize()
+
+    ###
+    ### Updates
+    ###
     async def update_status(self) -> None:
         await self.update_terminals()
         await self.update_partitions()
 
-
-    async def update_terminals(self) -> None:
+    # Operator
+    async def _update_terminals_by_intervals(
+            self,
+            terminals: dict[int, Terminal],
+            intervals: list[Interval]
+    ) -> None:
         self._require_initialized()
 
         async with self._lock:
             await update_terminal_statuses(
-                self._protocol, self._terminals, self._terminal_intervals, self._pin,
+                self._protocol, terminals, intervals, self._pin,
             )
 
-    async def update_partitions(self) -> None:
+    async def update_terminals(self) -> MappingProxyType[int, Terminal]:
+        await self._update_terminals_by_intervals(
+            self._terminals,
+            self._terminal_intervals,
+        )
+        return self.terminals
+
+    async def update_zone_terminals(self) -> MappingProxyType[int, ZoneTerminal]:
+        await self._update_terminals_by_intervals(
+            self._zone_terminals,
+            self._zone_terminal_intervals,
+        )
+        return self.zone_terminals
+
+    async def update_single_zones(self) -> MappingProxyType[int, SingleZone]:
+        await self._update_terminals_by_intervals(
+            self._single_zones,
+            self._single_zone_intervals,
+        )
+        return self.single_zones
+
+    async def update_double_zones(self) -> MappingProxyType[int, DoubleZone]:
+        await self._update_terminals_by_intervals(
+            self._double_zones,
+            self._double_zone_intervals,
+        )
+        return self.double_zones
+
+    async def update_outputs(self) -> MappingProxyType[int, Output]:
+        await self._update_terminals_by_intervals(
+            self._outputs,
+            self._output_intervals,
+        )
+        return self.outputs
+
+    async def update_partitions(self) -> MappingProxyType[int, Partition]:
         self._require_initialized()
 
         async with self._lock:
             await update_partition_statuses(
                 self._protocol, self._partitions, self._pin,
             )
+
+        return self.partitions
 
     def get_terminal_id_from_zone_id(self, zone_id: int) -> int:
         try:
@@ -256,10 +348,10 @@ class Client:
                 "Client.initialize() must be awaited before this operation is available."
             )
 
-    # ------------------------------------------------------------------
-    # Read accessors
-    # ------------------------------------------------------------------
 
+    ###
+    ### Read properties
+    ###
     @property
     def panel_info(self) -> tuple[str, str, str] | None:
         """:return: (serial_number, firmware, model), or None if not initialised yet."""
@@ -298,6 +390,11 @@ class Client:
         """:return: All zones (from single and double-zone terminals), keyed by zone ID."""
         return MappingProxyType(self._zones)
 
+    @property
+    def zone_terminals(self) -> MappingProxyType[int, ZoneTerminal]:
+        """:return: All zone terminals, keyed by zone ID."""
+        return MappingProxyType(self._zone_terminals)
+
     def get_terminal(self, terminal_id: int) -> Terminal | None:
         return self._terminals.get(terminal_id)
 
@@ -316,9 +413,6 @@ class Client:
     def get_double_zone(self, terminal_id: int) -> DoubleZone | None:
         return self._double_zones.get(terminal_id)
 
-    # ------------------------------------------------------------------
-    # Commands
-    # ------------------------------------------------------------------
 
     ###
     ### Set output
@@ -329,6 +423,10 @@ class Client:
             state: bool,
     ) -> None:
         """Turns an output on or off."""
+        self._require_initialized()
+        if output_id not in self._outputs:
+            raise KeyError(f"Unknown output id: {output_id}")
+
         async with self._lock:
             await set_output_status(
                 self._protocol, output_id, state, self._pin,
@@ -343,6 +441,10 @@ class Client:
             bypass: bool,
     ) -> None:
         """Enables or disables bypass on a single zone."""
+        self._require_initialized()
+        if zone_id not in self._zones:
+            raise KeyError(f"Unknown zone id: {zone_id}")
+
         async with self._lock:
             await set_zone_bypass(
                 self._protocol, zone_id, bypass, self._pin,
@@ -370,6 +472,11 @@ class Client:
             arming_statuses: dict[int, ArmingStatus],
     ) -> None:
         """Sets the arming status of one or more partitions in a single command."""
+        self._require_initialized()
+        missing = arming_statuses.keys() - self._partitions.keys()
+        if missing:
+            raise KeyError(f"Unknown partition id(s): {sorted(missing)}")
+
         async with self._lock:
             await set_partition_arming_statuses(
                 self._protocol, arming_statuses, self._pin,
@@ -413,6 +520,11 @@ class Client:
             partition_ids: set[int],
     ) -> None:
         """Clears alarm memory for the given partitions."""
+        self._require_initialized()
+        missing = partition_ids - self._partitions.keys()
+        if missing:
+            raise KeyError(f"Unknown partition id(s): {sorted(missing)}")
+
         async with self._lock:
             await reset_partition_memories(
                 self._protocol, partition_ids, self._pin,

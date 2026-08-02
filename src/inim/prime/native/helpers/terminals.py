@@ -8,7 +8,7 @@ from inim.prime.native.operations.terminals.get_terminal_statuses import get_ter
 from inim.prime.native.operations.zones.const import ZONE_1_ID_OFFSET
 from inim.prime.native.operations.zones.get_zone_labels import get_zone_labels
 from inim.prime.native.operations.zones.get_zone_settings import get_zone_settings
-from inim.prime.native.utils import Interval, make_intervals
+from inim.prime.native.utils import Interval
 from inim.prime.native.wire.protocol import Protocol
 
 
@@ -32,7 +32,7 @@ async def get_terminal_statuses_by_intervals(
 async def initialize_terminals(
         protocol: Protocol,
         pin: str | None = None,
-) -> tuple[dict[int, Terminal], list[Interval]]:
+) -> dict[int, Terminal]:
     terminals: dict[int, Terminal] = {}
 
     terminal_statuses, zone_labels, zone_settings, output_labels = await asyncio.gather(
@@ -76,11 +76,8 @@ async def initialize_terminals(
                 label = output_labels[terminal_id],
             )
 
-    intervals: list[Interval] = make_intervals(
-        list(terminals.keys())
-    )
 
-    return terminals, intervals
+    return terminals
 
 
 async def update_terminal_statuses(
