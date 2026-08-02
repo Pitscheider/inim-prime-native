@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../ha-inim-prime-native/.idea/ha-inim-prime-native.iml" filepath="$PROJECT_DIR$/../ha-inim-prime-native/.idea/ha-inim-prime-native.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/inim-prime-native.iml" filepath="$PROJECT_DIR$/.idea/inim-prime-native.iml" />
     </modules>
   </component>
