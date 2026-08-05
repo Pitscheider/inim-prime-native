@@ -3,6 +3,7 @@ name = "inim-prime-native"
 description = "Python library for INIM Prime native protocol"
 readme = "README.md"
 requires-python = ">=3.14"
+version = "0.0.1"
 license = { text = "GPLv3" }
 authors = [
     { name = "Pitscheider", email = "pitscheider@tuta.com" }
