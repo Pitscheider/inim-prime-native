@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import IntEnum, auto
+from enum import IntEnum
 from typing import Self
 
 from inim.prime.native.models.terminals import Terminal, TerminalStatus
@@ -10,7 +10,7 @@ class ZoneState(IntEnum):
     TAMPER = 0
     STANDBY = 1
     ALARM = 2
-    UNKNOWN = auto()
+    SHORT_CIRCUIT = 3
 
 
 
@@ -38,10 +38,7 @@ class ZoneStatus:
     def decode_state_byte(
             byte: int,
     ) -> ZoneState:
-        try:
-            return ZoneState(byte)
-        except ValueError:
-            return ZoneState.UNKNOWN
+        return ZoneState(byte)
 
 
 

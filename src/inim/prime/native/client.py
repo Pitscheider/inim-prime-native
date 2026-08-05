@@ -450,7 +450,7 @@ class Client:
                 self._protocol, zone_id, bypass, self._pin,
             )
 
-    async def set_all_zones_bypass(
+    async def set_all_zone_bypasses(
             self,
             bypass: bool,
     ) -> None:
@@ -458,7 +458,7 @@ class Client:
         Unknown state is updated.
         The state considered is the one the client has when the function is called."""
         self._require_initialized()
-        for zone in self.zones.values():
+        for zone in self._zones.values():
             if zone.zone_status is not None and zone.zone_status.bypass == bypass:
                 continue
             await self.set_zone_bypass(zone.zone_id, bypass)

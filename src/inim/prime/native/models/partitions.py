@@ -10,10 +10,10 @@ class ArmingStatus(IntEnum):
 
 
 
-class PartitionAlarmStatus(Enum):
-    NO_ALARM = auto()
-    ACTIVE_ALARM = auto()
-    ALARM_MEMORY = auto()
+class PartitionState(Enum):
+    OK = auto()
+    ALARM = auto()
+    TAMPER = auto()
 
 
 
@@ -26,9 +26,8 @@ class PartitionStatus:
 
     ### Attributes
     arming_status: ArmingStatus
-    alarm_status: PartitionAlarmStatus
-    sabotage: bool | None
-    sabotage_memory: bool | None
+    partition_state: PartitionState
+    alarm_memory: bool
     raw: bytes
 
 
@@ -42,13 +41,12 @@ class PartitionStatus:
             return None
         else:
             arming_status = cls.decode_arming_status_byte(raw[1])
-            alarm_status = cls.decode_alarm_byte(raw[0], raw[2], arming_status)
+            partition_state, alarm_memory = cls.decode_alarm_byte(raw[0], raw[2], arming_status)
 
             return cls(
                 arming_status = arming_status,
-                alarm_status = alarm_status,
-                sabotage = None,
-                sabotage_memory = None,
+                partition_state = partition_state,
+                alarm_memory = alarm_memory,
                 raw = raw,
             )
 
@@ -65,14 +63,17 @@ class PartitionStatus:
             byte_0: int,
             byte_2: int,
             arming_status: ArmingStatus,
-    ) -> PartitionAlarmStatus:
+    ) -> tuple[PartitionState, bool]:
         # It is not clear why both values changes, so I chose a flexible approach with OR
+        partition_state: PartitionState = PartitionState.OK
+        alarm_memory: bool = False
+
         if byte_0 & 0x01 or byte_2 & 0x01:
-            if arming_status == ArmingStatus.DISARMED:
-                return PartitionAlarmStatus.ALARM_MEMORY
-            else:
-                return PartitionAlarmStatus.ACTIVE_ALARM
-        return PartitionAlarmStatus.NO_ALARM
+            alarm_memory = True
+            if arming_status != ArmingStatus.DISARMED:
+                partition_state = PartitionState.ALARM
+
+        return partition_state, alarm_memory
 
 
 
@@ -116,9 +117,8 @@ class Partition:
                     f"ID={self.partition_id} - {self.label}"
                     f"\n\tZones: {self.zones}"
                     f"\n\tArming status: {self.status.arming_status.name}"
-                    f"\n\tAlarm status: {self.status.alarm_status.name}"
-                    f"\n\tSabotage: {self.status.sabotage}"
-                    f"\n\tSabotage memory: {self.status.sabotage_memory}"
+                    f"\n\tState: {self.status.partition_state.name}"
+                    f"\n\tAlarm memory: {self.status.alarm_memory}"
                     f"\n\tRaw status: {self.status.raw.hex(" ")}"
             )
         else:
