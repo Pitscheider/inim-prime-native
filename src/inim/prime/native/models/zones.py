@@ -11,6 +11,7 @@ class ZoneState(IntEnum):
     STANDBY = 1
     ALARM = 2
     SHORT_CIRCUIT = 3
+    UNKNOWN = 6
 
 
 
@@ -38,7 +39,10 @@ class ZoneStatus:
     def decode_state_byte(
             byte: int,
     ) -> ZoneState:
-        return ZoneState(byte)
+        try:
+            return ZoneState(byte)
+        except ValueError:
+            return ZoneState.UNKNOWN
 
 
 
