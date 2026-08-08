@@ -63,7 +63,7 @@ class Panel:
     DEFAULT_PASSWORD: Final[str] = "pass"
 
     DEFAULT_MASTER_PIN: bytes = b"\x74\x00\x00\x00\x00\x00"
-
+    MAX_PIN_CHARACTERS: int = 6
 
 
 
