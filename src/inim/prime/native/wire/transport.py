@@ -304,6 +304,7 @@ class Transport:
                     "TRANSPORT -> Connection closed mid-response after %d bytes.",
                     len(exc.partial),
                 )
+            self.close()
             raise ConnectionError(
                 "Panel closed the connection mid-response."
             ) from exc
