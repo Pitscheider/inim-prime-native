@@ -205,11 +205,11 @@ class InnerHeader(Header):
         operation: Final[slice] = next_slice(crc, operation_size)
         inner_frame_length: Final[slice] = next_slice(operation, inner_frame_length_size)
 
-    MAGIC: ClassVar[bytes] = b"\x50\x50"
+    MAGIC: ClassVar[bytes] = b"\x50\x54"
 
 
     ### Attributes
-    # Magic                 [0:2]     0x50 0x50       raw
+    # Magic                 [0:2]     0x50 0x54       raw
     # CRC-16/ARC            [2:4]     0-initialised   uint16 LE
     # FrameOperation             [4:6]     0-initialised   raw
     # Inner frame length    [6:10]    0-initialised   uint32 LE
