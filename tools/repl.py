@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from inim.prime.native.client import Client
 from inim.prime.native.models.partitions import ArmingStatus
@@ -229,12 +230,20 @@ async def repl(config: Config) -> None:
     cipher = Cipher(config.password)
     frame_type: type[Frame] = OuterFrame if config.use_outer_frame else InnerFrame
 
-    client = client = await Client(
+    logging.basicConfig(
+        level = logging.DEBUG,
+        format = "%(asctime)s.%(msecs)03d %(levelname)-7s %(message)s",
+        datefmt = "%H:%M:%S",
+    )
+    logger = logging.getLogger("inim")
+
+    client = await Client(
         host = config.host,
         password = config.password,
         use_outer_frame = config.use_outer_frame,
         port = config.port,
         pin = config.pin,
+        logger = logger,
     ).connect()
 
     print_help()

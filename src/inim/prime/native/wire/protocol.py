@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
 from typing import Final, Self
 
 from inim.prime.native.const import CommandOperation, FrameOperation, Panel
@@ -13,9 +12,11 @@ from .payload import ReadRequestPayload, ReadResponsePayload, CommandWithPinRequ
     CommandRequestPayload, CommandResponsePayload, CommandWithPinResponsePayload
 from .transport import Transport
 
+
 ### Logging helpers
 HEX_LOG_LIMIT: Final[int] = 256  # bytes shown before truncating a hex dump
 CHECKSUM_SEARCH_BACK: Final[int] = 4  # how far before the expected checksum position to search
+OPCODE_SIZE: Final[int] = 4  # command opcode field, replaced by its bitwise NOT in responses
 
 
 def _hex(data: bytes, limit: int = HEX_LOG_LIMIT) -> str:
@@ -40,18 +41,34 @@ def _describe_payload(payload: bytes, pin_slice: slice | None) -> str:
     return f"{before} {pin_text} {after}".strip()
 
 
+def _is_echo(request: bytes, response: bytes, operation: FrameOperation) -> bool:
+    """
+    True if the panel reflected the request instead of executing it.
+    Seen on firmware 5.00 when requests were sent with the 50 54 preamble:
+    the response starts with the request plaintext (commands: with the opcode
+    replaced by its bitwise NOT).
+    """
+    if operation is FrameOperation.COMMAND:
+        body = request[OPCODE_SIZE:]
+        return len(body) > 0 and response[OPCODE_SIZE:OPCODE_SIZE + len(body)] == body
+    return len(request) > 0 and response.startswith(request)
+
+
 def _read_summary(chunk_length: int, response: bytes) -> str:
-    """Explain the layout of a memory-read response (where the checksum really is)."""
+    """
+    Explain the layout of a memory-read response.
+    Expected: [data:chunk_length][checksum:1].
+    """
     got = len(response)
+    expected = chunk_length + ChecksummedPayload.Layout.checksum_size
     data_sum = sum(response[:chunk_length]) & 0xFF
-    after_data = response[chunk_length] if got > chunk_length else None
-    last = response[-1] if response else None
-    sum_but_last = (sum(response[:-1]) & 0xFF) if response else None
+    checksum_byte = response[chunk_length] if got > chunk_length else None
 
     # Offsets near the end whose byte equals the 8-bit sum of everything before it
     hits: list[int] = []
-    running = sum(response[:max(0, chunk_length - CHECKSUM_SEARCH_BACK)])
-    for offset in range(max(0, chunk_length - CHECKSUM_SEARCH_BACK), got):
+    search_start = max(0, chunk_length - CHECKSUM_SEARCH_BACK)
+    running = sum(response[:search_start])
+    for offset in range(search_start, got):
         if response[offset] == running & 0xFF:
             hits.append(offset)
         running += response[offset]
@@ -59,22 +76,12 @@ def _read_summary(chunk_length: int, response: bytes) -> str:
     tail_start = max(0, chunk_length - 8)
     return (
         f"asked {chunk_length} B, got {got} B "
-        f"(expected {chunk_length + 1}, extra {got - chunk_length - 1:+d}); "
-        f"sum(data)={_byte(data_sum)}; byte after data={_byte(after_data)}; "
-        f"last byte={_byte(last)}; sum(all but last)={_byte(sum_but_last)}; "
-        f"checksum matches at offset(s) {hits or 'none'}; "
+        f"(expected {expected}, extra {got - expected:+d}); "
+        f"sum(data)={_byte(data_sum)}; byte at checksum position={_byte(checksum_byte)} "
+        f"({'OK' if checksum_byte == data_sum else 'MISMATCH'}); "
+        f"checksum matches at offset(s) {hits or 'none'} (expected {chunk_length}); "
         f"tail from offset {tail_start}: {response[tail_start:].hex(' ')}"
     )
-
-def _describe_panel_time(response: ReadResponsePayload) -> str:
-    """Panel clock from a read response, with the drift against the local clock."""
-    raw = f"raw {response.timestamp.hex(' ')} | utc offset {response.timestamp_utc_offset.hex(' ')}"
-    try:
-        panel_time = response.timestamp_datetime
-    except (ValueError, OverflowError) as err:   # e.g. an implausible offset
-        return f"undecodable ({err}) | {raw}"
-    drift = (panel_time - datetime.now(timezone.utc)).total_seconds()
-    return f"{panel_time.isoformat()} | drift {drift:+.1f} s vs local clock | {raw}"
 
 
 class Protocol:
@@ -150,19 +157,19 @@ class Protocol:
             header_size: int,
     ) -> None:
         """Log a command response: header, opcode echo check, data."""
-        expected_echo = (~int(operation) & 0xFFFFFFFF).to_bytes(4, "little")
-        echo_ok = response[:4] == expected_echo
+        expected_echo = (~int(operation) & 0xFFFFFFFF).to_bytes(OPCODE_SIZE, "little")
+        echo_ok = response[:OPCODE_SIZE] == expected_echo
 
         if not echo_ok:
             self._log(
                 logging.WARNING,
-                "PROTOCOL -> [CMD %s] unexpected response header %s (expected echo %s)",
+                "PROTOCOL -> [CMD %s] unexpected response header %s (expected opcode echo %s)",
                 operation.name, response[:header_size].hex(" "), expected_echo.hex(" "),
             )
 
         if self._debug_enabled:
             self._logger.debug(
-                "PROTOCOL -> [CMD %s] response %d B | header (%d B): %s | echo %s | data (%d B): %s",
+                "PROTOCOL -> [CMD %s] response %d B | header (%d B): %s | opcode echo %s | data (%d B): %s",
                 operation.name,
                 len(response),
                 header_size,
@@ -231,8 +238,13 @@ class Protocol:
     ) -> bytes:
         """
         Encrypts and sends a payload, then receives, validates and decrypts the response.
-        :param label:       Short tag used in log lines (e.g. "CMD GET_PANEL_INFO").
-        :param pin_slice:   Position of the PIN field in `payload`, redacted in logs.
+        :param payload:                 Plaintext request payload.
+        :param operation:               Frame operation (READ or COMMAND).
+        :param response_payload_length: Expected response plaintext length, announced in the
+                                        outer header (PrimeLAN only). None announces 0.
+        :param label:                   Short tag used in log lines (e.g. "CMD GET_PANEL_INFO").
+        :param pin_slice:               Position of the PIN field in `payload`, redacted in logs.
+        :return:                        Decrypted response payload.
         """
         debug = self._debug_enabled
         tag = label or operation.name
@@ -262,14 +274,16 @@ class Protocol:
             )
 
         frame_bytes = frame.to_bytes()
+        inner_offset = OuterHeader.Layout.size if self._use_outer_frame else 0
 
         if debug:
             header_len = len(frame_bytes) - len(encrypted_payload)
             self._logger.debug(
-                "PROTOCOL -> [%s] TX frame %d B | header: %s | ciphertext %d B | announced response length: %s",
+                "PROTOCOL -> [%s] TX frame %d B | header: %s | inner magic: %s | ciphertext %d B | announced response length: %s",
                 tag,
                 len(frame_bytes),
                 frame_bytes[:header_len].hex(" "),
+                frame_bytes[inner_offset:inner_offset + 2].hex(" "),
                 len(encrypted_payload),
                 response_payload_length if self._use_outer_frame else "n/a (no outer frame)",
             )
@@ -282,18 +296,15 @@ class Protocol:
         )
         elapsed_ms = (time.monotonic() - started) * 1000
 
-        inner_offset = OuterHeader.Layout.size if self._use_outer_frame else 0
-        response_header_len = inner_offset + InnerHeader.Layout.size
-
         if debug:
-            magic = response_frame[inner_offset:inner_offset + 2]
+            response_header_len = inner_offset + InnerHeader.Layout.size
             self._logger.debug(
                 "PROTOCOL -> [%s] RX frame %d B in %.1f ms | header: %s | inner magic: %s",
                 tag,
                 len(response_frame),
                 elapsed_ms,
                 response_frame[:response_header_len].hex(" "),
-                magic.hex(" "),
+                response_frame[inner_offset:inner_offset + 2].hex(" "),
             )
 
         # Strip headers and validate, returns the encrypted response payload
@@ -328,6 +339,14 @@ class Protocol:
                 tag, len(response_payload), _hex(response_payload),
             )
 
+        if _is_echo(payload, response_payload, operation):
+            self._log(
+                logging.WARNING,
+                "PROTOCOL -> [%s] the panel echoed the request instead of executing it "
+                "(check the inner magic sent: it must be 50 50)",
+                tag,
+            )
+
         return response_payload
 
     async def execute_command(
@@ -336,9 +355,11 @@ class Protocol:
             data: bytes | None = None,
             response_payload_data_length: int | None = None,
     ) -> bytes:
-
-        response_payload_length = response_payload_data_length - CommandResponsePayload.Layout.header_size if response_payload_data_length else None
-
+        """
+        Sends a command without PIN field and returns the response data (header stripped).
+        :param response_payload_data_length: Kept for compatibility; the response length is
+                                             not announced for commands (PrimeLAN accepts 0).
+        """
         payload = CommandRequestPayload.assemble(
             operation = operation,
             data = data,
@@ -347,7 +368,7 @@ class Protocol:
         response_payload = await self.exchange_payload(
             payload = payload,
             operation = FrameOperation.COMMAND,
-            response_payload_length = response_payload_length,
+            response_payload_length = None,
             label = f"CMD {operation.name}",
         )
 
@@ -362,9 +383,11 @@ class Protocol:
             pin: str | None = None,
             response_payload_data_length: int | None = None,
     ) -> bytes:
-
-        response_payload_length = response_payload_data_length - CommandWithPinResponsePayload.Layout.header_size if response_payload_data_length else None
-
+        """
+        Sends a command with PIN field and returns the response data (18-byte header stripped).
+        :param response_payload_data_length: Kept for compatibility; the response length is
+                                             not announced for commands (PrimeLAN accepts 0).
+        """
         payload = CommandWithPinRequestPayload.assemble(
             operation = operation,
             pin = pin,
@@ -374,7 +397,7 @@ class Protocol:
         response_payload = await self.exchange_payload(
             payload = payload,
             operation = FrameOperation.COMMAND,
-            response_payload_length = response_payload_length,
+            response_payload_length = None,
             label = f"CMD {operation.name}",
             pin_slice = CommandWithPinRequestPayload.Layout.pin,
         )
@@ -463,17 +486,9 @@ class Protocol:
                 tag, _read_summary(chunk_length, response_payload_bytes),
             )
 
-        # Validate the response payload, strip checksum and timestamp, return the read bytes
+        # Validate the response payload, strip the checksum, return the read bytes
         try:
-            response = ReadResponsePayload.from_bytes(response_payload_bytes)
-
-            if self._debug_enabled:
-                self._logger.debug(
-                    "PROTOCOL -> [%s] panel time: %s",
-                    tag, _describe_panel_time(response),
-                )
-
-            data = response.validate().data
+            data = ReadResponsePayload.disassemble(response_payload_bytes)
             if len(data) != chunk_length:
                 raise ValueError(
                     f"Read response length mismatch: asked {chunk_length} B, got {len(data)} B."

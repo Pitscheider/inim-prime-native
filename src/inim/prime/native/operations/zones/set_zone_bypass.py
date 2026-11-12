@@ -1,6 +1,7 @@
 from typing import Final
 
 from inim.prime.native.const import Encoding, CommandOperation
+from inim.prime.native.operations.zones.utils import zone_to_terminal
 from inim.prime.native.utils import encode_int
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
 from inim.prime.native.wire.protocol import Protocol
@@ -8,21 +9,21 @@ from inim.prime.native.wire.protocol import Protocol
 ENABLE_BYPASS_VALUE: Final[int] = 0
 DISABLE_BYPASS_VALUE: Final[int] = 2
 
+# Bit 0 of the value selects the terminal's second zone (half B).
+HALF_B_FLAG: Final[int] = 1
+
 def assemble_data(
         zone_id: int,
         bypass: bool
 ) -> bytes:
-    zone_id_bytes = encode_int(zone_id, Encoding.UINT16_LE)
+    terminal, half = zone_to_terminal(zone_id)
 
-    if bypass:
-        bypass_bytes = encode_int(ENABLE_BYPASS_VALUE, Encoding.UINT16_LE)
-    else:
-        bypass_bytes = encode_int(DISABLE_BYPASS_VALUE, Encoding.UINT16_LE)
+    value = (ENABLE_BYPASS_VALUE if bypass else DISABLE_BYPASS_VALUE) | (HALF_B_FLAG if half else 0)
 
-
-    command_data = b"".join([zone_id_bytes, bypass_bytes])
-
-    return command_data
+    return b"".join([
+        encode_int(terminal, Encoding.UINT16_LE),
+        encode_int(value, Encoding.UINT16_LE),
+    ])
 
 
 def assemble_payload(

@@ -48,4 +48,4 @@ from inim.prime.native.utils import Interval
 # TERMINAL_LAYOUT: Final[dict[TerminalType, slice]] = _build_terminal_layout()
 
 
-TERMINAL_IDS_INTERVAL: Final[Interval] = Interval(0, 1009)
+TERMINAL_IDS_INTERVAL: Final[Interval] = Interval(0, 1509)

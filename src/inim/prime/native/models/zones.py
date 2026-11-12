@@ -358,7 +358,7 @@ class DoubleZone(ZoneTerminal):
         if self.terminal_status is not None:
             zone_0_state, zone_1_state = self.decode_state(self.terminal_status.raw)
             zone_0_bypass, zone_1_bypass = self.decode_bypass(self.terminal_status.raw)
-            zone_0_alarm_memory, zone_1_alarm_memory = self.decode_bypass(self.terminal_status.raw)
+            zone_0_alarm_memory, zone_1_alarm_memory = self.decode_alarm_memory(self.terminal_status.raw)
 
             self.zone_0.zone_status = ZoneStatus(
                 state = zone_0_state,

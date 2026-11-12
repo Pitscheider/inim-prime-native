@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
 from typing import ClassVar, Self, Final
 
 from inim.prime.native.const import Encoding, CommandOperation, Panel, EncodingSizes
@@ -276,22 +275,16 @@ class ReadResponsePayload(ChecksummedPayload):
     ### Constants
     class Layout:
         checksum_size: Final[int] = ChecksummedPayload.Layout.checksum_size
-        timestamp_size: Final[int] = 4
-        timestamp_utc_offset_size: Final[int] = 2
 
-        timestamp_utc_offset: Final[slice] = previous_slice(None, timestamp_utc_offset_size)
-        timestamp: Final[slice] = previous_slice(timestamp_utc_offset, timestamp_size)
-        checksum: Final[slice] = previous_slice(timestamp, checksum_size)
+        checksum: Final[slice] = previous_slice(None, checksum_size)
         data: Final[slice] = previous_slice(checksum, None)
 
     CHECKSUM_COVERAGE: ClassVar[slice] = Layout.data
-    EPOCH: ClassVar[datetime] = datetime(2000, 1, 1, tzinfo = timezone.utc)
+
 
     ### Attributes
     data: bytes = b""
-    checksum: bytes = bytes(Layout.checksum_size)
-    timestamp: bytes = bytes(Layout.timestamp_size)
-    timestamp_utc_offset: bytes = bytes(Layout.timestamp_utc_offset_size)
+    checksum: bytes = bytes(1)
 
     ### Main
     @classmethod
@@ -322,38 +315,14 @@ class ReadResponsePayload(ChecksummedPayload):
         return cls(
             data = raw[cls.Layout.data],
             checksum = raw[cls.Layout.checksum],
-            timestamp = raw[cls.Layout.timestamp],
-            timestamp_utc_offset = raw[cls.Layout.timestamp_utc_offset],
         )
 
 
     ### Properties
-    @property
-    def timestamp_datetime(self) -> datetime:
-        """
-        timestamp layout (provisional, reverse-engineered from live 5.00 responses):
-            [0:4]   uint32 LE, seconds since 2000-01-01 00:00:00 UTC
-            [4:6]   int16 LE, believed to be the panel's UTC offset in hours
-                    (01 00 = +1 h observed under CET)
-
-        The seconds field was verified against the real time: it tracks UTC to
-        the second across reads. The offset interpretation is NOT yet confirmed:
-        it is consistent with CET (UTC+1) but should read 02 00 under CEST, or
-        change with the panel's timezone setting. If it turns out to be a status
-        or flag instead, only the UTC timestamp is reliable.
-
-        :return: Timezone-aware datetime in the panel's local time
-                 (UTC timestamp shifted by the trailer offset).
-        """
-        seconds = decode_int(self.timestamp, Encoding.UINT32_LE)
-        offset_h = int.from_bytes(self.timestamp_utc_offset, "little", signed = True)
-        utc = self.EPOCH + timedelta(seconds = seconds)
-        return utc.astimezone(timezone(timedelta(hours = offset_h)))
-
     ## Serialization
     @property
     def raw_bytes(self) -> bytes:
-        return b"".join((self.data, self.checksum, self.timestamp, self.timestamp_utc_offset))
+        return b"".join((self.data, self.checksum))
 
 
 ### Command Payloads

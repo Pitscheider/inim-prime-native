@@ -19,44 +19,31 @@ class EncodingSizes:
 
 
 class CommandOperation(IntEnum):
-    TEST_0 = 0
-    TEST_1 = 1
-    TEST_2 = 2
     SET_ARMING_STATUS = 3
-    TEST_4 = 4
-    TEST_5 = 5
     GET_PARTITION_STATUSES = 6
     GET_TERMINAL_STATUSES = 7
     SET_OUTPUT_STATUS = 8
     SET_ZONE_BYPASS = 9
     SET_DATETIME = 10
-    TEST_11 = 11
-    TEST_12 = 12
-    TEST_13 = 13
-    TEST_14 = 14
-    TEST_15 = 15
     RESET_PARTITIONS = 16
-    TEST_17 = 17
-    TEST_18 = 18
-    TEST_19 = 19
-    TEST_20 = 20
-    TEST_21 = 21
     GET_PANEL_INFO = 23
 
 
 class Address(IntEnum):
-    ZONE_SETTINGS = 336016404
-    PARTITION_LABELS = 335744288
-    ZONE_LABELS = 335744768
-    OUTPUT_LABELS = 335797936
-    ARMING_SCENARIO_LABELS = 335796448
-    OUTPUT_SCENARIO_LABELS = 335803584
+    PARTITION_LABELS       = 0x14030D20
+    ZONE_LABELS            = 0x14030F00
+    ARMING_SCENARIO_LABELS = 0x14041760
+    OUTPUT_LABELS          = 0x14041D30
+    ZONE_SETTINGS          = 0x1408B920
+    # OUTPUT_SCENARIO_LABELS: unknown on 5.00 -> find it in your capture
 
 class AddressTable:
     ENTRY_SIZE: Final[int] = 4
 
-    GET_PARTITION_LABELS: Final[int] = 436216852
-    GET_TERMINAL_LABELS: Final[int] = 436216856
+    PARTITION_LABELS: Final[int]       = 0x1A002414
+    ZONE_LABELS: Final[int]            = 0x1A002418
+    ARMING_SCENARIO_LABELS: Final[int] = 0x1A002434
+    OUTPUT_LABELS: Final[int]          = 0x1A00243C
 
 class Panel:
     DEFAULT_PORT: Final[int] = 6004

@@ -205,8 +205,10 @@ class InnerHeader(Header):
         operation: Final[slice] = next_slice(crc, operation_size)
         inner_frame_length: Final[slice] = next_slice(operation, inner_frame_length_size)
 
-    MAGIC: ClassVar[bytes] = b"\x50\x54"
+    MAGIC: ClassVar[bytes] = b"\x50\x50"
 
+    # Accepted in responses: 50 50 (firmware 4.x), 50 54 (firmware 5.x)
+    RESPONSE_MAGICS: ClassVar[frozenset[bytes]] = frozenset({b"\x50\x50", b"\x50\x54"})
 
     ### Attributes
     # Magic                 [0:2]     0x50 0x54       raw
@@ -303,8 +305,8 @@ class InnerHeader(Header):
     ## Validation
     @property
     def is_magic_valid(self) -> bool:
-        """True if magic bytes match 0x5050."""
-        return self.magic == InnerHeader.MAGIC
+        """True if the magic is one of the accepted response magics."""
+        return self.magic in InnerHeader.RESPONSE_MAGICS
 
     @property
     def is_valid(self) -> bool:

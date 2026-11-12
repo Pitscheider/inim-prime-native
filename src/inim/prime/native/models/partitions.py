@@ -21,13 +21,22 @@ class PartitionState(Enum):
 class PartitionStatus:
     ### Constants
     RAW_SIZE: ClassVar[int] = 3
-    # CONFIGURED_MASK: ClassVar[int] = 0x10
+
+    # Byte 0: live state
+    STATE_ALARM: ClassVar[int] = 1
+    STATE_SABOTAGE: ClassVar[int] = 2
+
+    # Byte 2: flags
+    FLAG_ALARM_MEMORY: ClassVar[int] = 0x01
+    FLAG_SABOTAGE_MEMORY: ClassVar[int] = 0x02
+    FLAG_CONFIGURED: ClassVar[int] = 0x10
 
 
     ### Attributes
     arming_status: ArmingStatus
     partition_state: PartitionState
     alarm_memory: bool
+    sabotage_memory: bool
     raw: bytes
 
 
@@ -37,43 +46,37 @@ class PartitionStatus:
             cls,
             raw: bytes
     ) -> Self | None:
-        if raw == bytes(cls.RAW_SIZE): # If all bytes are 0s
+        """
+        Decodes a 3-byte partition status record: [state][arming status][flags].
+        :return: The status, or None if the partition is not configured
+                 or its arming status byte is unknown.
+        """
+        state, mode, flags = raw
+
+        if not flags & cls.FLAG_CONFIGURED:
             return None
+
+        try:
+            arming_status = ArmingStatus(mode)
+        except ValueError:
+            return None
+
+        in_alarm = state == cls.STATE_ALARM
+
+        if in_alarm and arming_status is not ArmingStatus.DISARMED:
+            partition_state = PartitionState.ALARM
+        elif state == cls.STATE_SABOTAGE:
+            partition_state = PartitionState.TAMPER
         else:
-            arming_status = cls.decode_arming_status_byte(raw[1])
-            partition_state, alarm_memory = cls.decode_alarm_byte(raw[0], raw[2], arming_status)
+            partition_state = PartitionState.OK
 
-            return cls(
-                arming_status = arming_status,
-                partition_state = partition_state,
-                alarm_memory = alarm_memory,
-                raw = raw,
-            )
-
-
-    ### Static methods
-    @staticmethod
-    def decode_arming_status_byte(
-            byte: int
-    ):
-        return ArmingStatus(byte)
-
-    @staticmethod
-    def decode_alarm_byte(
-            byte_0: int,
-            byte_2: int,
-            arming_status: ArmingStatus,
-    ) -> tuple[PartitionState, bool]:
-        # It is not clear why both values changes, so I chose a flexible approach with OR
-        partition_state: PartitionState = PartitionState.OK
-        alarm_memory: bool = False
-
-        if byte_0 & 0x01 or byte_2 & 0x01:
-            alarm_memory = True
-            if arming_status != ArmingStatus.DISARMED:
-                partition_state = PartitionState.ALARM
-
-        return partition_state, alarm_memory
+        return cls(
+            arming_status = arming_status,
+            partition_state = partition_state,
+            alarm_memory = in_alarm or bool(flags & cls.FLAG_ALARM_MEMORY),
+            sabotage_memory = bool(flags & cls.FLAG_SABOTAGE_MEMORY),
+            raw = raw,
+        )
 
 
 
@@ -119,6 +122,7 @@ class Partition:
                     f"\n\tArming status: {self.status.arming_status.name}"
                     f"\n\tState: {self.status.partition_state.name}"
                     f"\n\tAlarm memory: {self.status.alarm_memory}"
+                    f"\n\tSabotage memory: {self.status.sabotage_memory}"
                     f"\n\tRaw status: {self.status.raw.hex(" ")}"
             )
         else:
