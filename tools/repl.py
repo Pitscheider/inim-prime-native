@@ -244,6 +244,7 @@ async def repl(config: Config) -> None:
         port = config.port,
         pin = config.pin,
         logger = logger,
+        firmware = None,
     ).connect()
 
     print_help()

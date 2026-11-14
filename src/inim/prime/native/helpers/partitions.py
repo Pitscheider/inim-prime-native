@@ -1,6 +1,7 @@
 import asyncio
 from collections import defaultdict
 
+from inim.prime.native.firmware import FirmwareProfile
 from inim.prime.native.models.partitions import Partition
 from inim.prime.native.models.zones import Zone
 from inim.prime.native.operations.partitions.get_partition_labels import get_partition_labels
@@ -10,6 +11,7 @@ from inim.prime.native.wire.protocol import Protocol
 
 async def initialize_partitions(
         protocol: Protocol,
+        profile: FirmwareProfile,
         zone_ids_by_partition: dict[int, set[int]],
         pin: str | None = None,
 ) -> dict[int, Partition]:
@@ -17,7 +19,7 @@ async def initialize_partitions(
 
     partition_statuses, partition_labels = await asyncio.gather(
         get_partition_statuses(protocol, pin),
-        get_partition_labels(protocol),
+        get_partition_labels(protocol, profile),
     )
 
     for partition_id, partition_status in partition_statuses.items():

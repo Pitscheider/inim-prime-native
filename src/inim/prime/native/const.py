@@ -28,15 +28,6 @@ class CommandOperation(IntEnum):
     RESET_PARTITIONS = 16
     GET_PANEL_INFO = 23
 
-
-class Address(IntEnum):
-    PARTITION_LABELS       = 0x14030D20
-    ZONE_LABELS            = 0x14030F00
-    ARMING_SCENARIO_LABELS = 0x14041760
-    OUTPUT_LABELS          = 0x14041D30
-    ZONE_SETTINGS          = 0x1408B920
-    # OUTPUT_SCENARIO_LABELS: unknown on 5.00 -> find it in your capture
-
 class AddressTable:
     ENTRY_SIZE: Final[int] = 4
 

@@ -6,6 +6,7 @@ from types import MappingProxyType
 from typing import Self
 
 from inim.prime.native.const import Panel
+from inim.prime.native.firmware import FirmwareProfile, select_profile
 from inim.prime.native.helpers.partitions import (
     get_zone_ids_by_partition,
     initialize_partitions,
@@ -81,6 +82,8 @@ class Client:
         "_firmware",
         "_model",
         "_initialized",
+        "_profile",
+        "_forced_profile",
     )
 
     ###
@@ -96,6 +99,7 @@ class Client:
             logger: logging.Logger | None = None,
             connect_timeout: float = Transport.DEFAULT_CONNECT_TIMEOUT,
             receive_timeout: float = Transport.DEFAULT_RECEIVE_TIMEOUT,
+            firmware: FirmwareProfile | None = None,
     ) -> None:
         """
         Creates the client. No TCP connection is made here, call connect()
@@ -113,6 +117,8 @@ class Client:
         :param logger:          Optional logger for debug and error messages.
         :param connect_timeout: Seconds before connect() gives up.
         :param receive_timeout: Seconds before a pending reception raises TimeoutError.
+        :param firmware: Force a firmware profile (FIRMWARE_4 / FIRMWARE_5).
+                                None = auto-detect from get_panel_info() in initialize().
         """
         self._protocol = Protocol(
             host = host,
@@ -124,6 +130,8 @@ class Client:
             receive_timeout = receive_timeout,
         )
 
+        self._forced_profile = firmware
+        self._profile: FirmwareProfile | None = firmware
         self._pin = pin
         self._logger = logger
         self._lock = asyncio.Lock()
@@ -181,6 +189,11 @@ class Client:
     async def __aexit__(self, *_: object) -> None:
         self.disconnect()
 
+    @property
+    def firmware_profile(self) -> FirmwareProfile | None:
+        """:return: The active firmware profile, or None before initialize() (unless forced)."""
+        return self._profile
+
     ###
     ### Initialization
     ###
@@ -197,7 +210,16 @@ class Client:
         async with self._lock:
             serial_number, firmware, model = await get_panel_info(self._protocol)
 
-            terminals = await initialize_terminals(self._protocol, self._pin)
+            profile = self._forced_profile or select_profile(firmware)
+
+            if self._logger:
+                self._logger.info(
+                    "CLIENT -> panel %s firmware %s, using profile %s%s",
+                    model, firmware, profile.name,
+                    " (forced)" if self._forced_profile else "",
+                )
+
+            terminals = await initialize_terminals(self._protocol, profile, self._pin)
 
             zone_to_terminal: dict[int, int] = {}
             zones: dict[int, Zone] = {}
@@ -220,6 +242,7 @@ class Client:
             zone_ids_by_partition = get_zone_ids_by_partition(zones)
             partitions = await initialize_partitions(
                 protocol = self._protocol,
+                profile = profile,
                 zone_ids_by_partition = zone_ids_by_partition,
                 pin = self._pin,
             )
@@ -250,7 +273,9 @@ class Client:
             self._zone_terminals = zone_terminals
             self._zone_terminal_intervals = zone_terminal_intervals
             self._partitions = partitions
+            self._profile = profile
             self._initialized = True
+
 
     async def ensure_initialized(self) -> None:
         """
@@ -348,6 +373,19 @@ class Client:
                 "Client.initialize() must be awaited before this operation is available."
             )
 
+    @property
+    def _active_profile(self) -> FirmwareProfile:
+        """
+        :return: The firmware profile in use.
+        :raises NotInitializedError: If no profile is available yet
+                                     (initialize() not awaited and none forced).
+        """
+        if self._profile is None:
+            raise NotInitializedError(
+                "No firmware profile available: await Client.initialize() "
+                "or pass firmware=... to the constructor."
+            )
+        return self._profile
 
     ###
     ### Read properties
@@ -445,9 +483,10 @@ class Client:
         if zone_id not in self._zones:
             raise KeyError(f"Unknown zone id: {zone_id}")
 
+
         async with self._lock:
             await set_zone_bypass(
-                self._protocol, zone_id, bypass, self._pin,
+                self._protocol, self._active_profile, zone_id, bypass, self._pin,
             )
 
     async def set_all_zone_bypasses(

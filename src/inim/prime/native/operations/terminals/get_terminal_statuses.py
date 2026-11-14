@@ -2,7 +2,6 @@ from typing import Final
 
 from inim.prime.native.const import Encoding, CommandOperation
 from inim.prime.native.models.terminals import TerminalStatus
-from inim.prime.native.operations.terminals.const import TERMINAL_IDS_INTERVAL
 from inim.prime.native.utils import encode_int, Interval
 from inim.prime.native.wire.payload import CommandWithPinRequestPayload
 from inim.prime.native.wire.protocol import Protocol
@@ -86,7 +85,7 @@ async def get_chunks(
 
 async def get_terminal_statuses(
         protocol: Protocol,
-        interval: Interval = TERMINAL_IDS_INTERVAL,
+        interval: Interval,
         pin: str | None = None,
 ) -> dict[int, TerminalStatus]:
     chunks = await get_chunks(

@@ -11,6 +11,7 @@ class Config:
     port: int
     use_outer_frame: bool
     poll: float
+    firmware: str | None
 
 def get_yaml_config() -> Config:
     config_path = os.path.join(
@@ -34,6 +35,7 @@ def get_yaml_config() -> Config:
         port=cfg.get("port", Panel.DEFAULT_PORT),
         use_outer_frame=cfg.get("use_outer_frame", False),
         poll=cfg.get("poll", 1.0),
+        firmware = str(cfg["firmware"]) if cfg.get("firmware") is not None else None,
     )
 
 def list_files(directory: str, extensions: list[str]) -> list[str]:

@@ -46,6 +46,3 @@ from inim.prime.native.utils import Interval
 # LAST_TERMINAL_ID: Final[int] = sum(TERMINALS_MAX_NUMBER.values()) - 1
 #
 # TERMINAL_LAYOUT: Final[dict[TerminalType, slice]] = _build_terminal_layout()
-
-
-TERMINAL_IDS_INTERVAL: Final[Interval] = Interval(0, 1509)

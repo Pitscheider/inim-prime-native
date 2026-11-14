@@ -1,11 +1,11 @@
 import asyncio
 
+from inim.prime.native.firmware import FirmwareProfile
 from inim.prime.native.models.outputs import Output
 from inim.prime.native.models.terminals import Terminal, TerminalStatus, TerminalType
 from inim.prime.native.models.zones import SingleZone, DoubleZone
 from inim.prime.native.operations.outputs.get_output_labels import get_output_labels
 from inim.prime.native.operations.terminals.get_terminal_statuses import get_terminal_statuses
-from inim.prime.native.operations.zones.const import ZONE_1_ID_OFFSET
 from inim.prime.native.operations.zones.get_zone_labels import get_zone_labels
 from inim.prime.native.operations.zones.get_zone_settings import get_zone_settings
 from inim.prime.native.utils import Interval
@@ -31,15 +31,16 @@ async def get_terminal_statuses_by_intervals(
 
 async def initialize_terminals(
         protocol: Protocol,
+        profile: FirmwareProfile,
         pin: str | None = None,
 ) -> dict[int, Terminal]:
     terminals: dict[int, Terminal] = {}
 
     terminal_statuses, zone_labels, zone_settings, output_labels = await asyncio.gather(
-        get_terminal_statuses(protocol, pin = pin),
-        get_zone_labels(protocol),
-        get_zone_settings(protocol),
-        get_output_labels(protocol)
+        get_terminal_statuses(protocol, profile.terminal_ids, pin),
+        get_zone_labels(protocol, profile),
+        get_zone_settings(protocol, profile),
+        get_output_labels(protocol, profile),
     )
 
     for terminal_id, terminal_status in terminal_statuses.items():
@@ -56,7 +57,7 @@ async def initialize_terminals(
 
         elif terminal_status.type == TerminalType.DOUBLE_ZONE:
             zone_0_id = terminal_id
-            zone_1_id = terminal_id + ZONE_1_ID_OFFSET
+            zone_1_id = terminal_id + profile.zone_1_id_offset
 
             terminals[terminal_id] = DoubleZone.decode(
                 terminal_id = terminal_id,

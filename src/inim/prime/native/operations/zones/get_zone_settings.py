@@ -1,8 +1,8 @@
 from typing import Final
 
-from inim.prime.native.const import Address, Encoding
+from inim.prime.native.const import Encoding
+from inim.prime.native.firmware import FirmwareProfile
 from inim.prime.native.models.zones import ZoneSetting
-from inim.prime.native.operations.zones.const import ZONE_IDS_INTERVAL
 from inim.prime.native.utils import Interval, decode_int
 from inim.prime.native.wire.protocol import Protocol
 
@@ -22,15 +22,15 @@ def _decode_partitions(raw_bytes: bytes) -> frozenset[int]:
 
 async def get_zone_settings(
         protocol: Protocol,
-        interval: Interval = ZONE_IDS_INTERVAL,
+        profile: FirmwareProfile,
+        interval: Interval | None = None,
 ) -> dict[int, ZoneSetting]:
+    interval = interval or profile.zone_ids
     zones_number = interval.end - interval.start + 1
-
-
     size = ZONE_SETTING_SIZE * zones_number
 
     response = await protocol.read_memory(
-        start_address = Address.ZONE_SETTINGS + interval.start * ZONE_SETTING_SIZE,
+        start_address = profile.memory.zone_settings + interval.start * ZONE_SETTING_SIZE,
         bytes_to_read = size,
     )
 
