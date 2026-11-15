@@ -5,7 +5,7 @@ import logging
 from types import MappingProxyType
 from typing import Self
 
-from helpers.arming_scenarios import initialize_arming_scenarios
+from inim.prime.native.helpers.arming_scenarios import initialize_arming_scenarios
 from inim.prime.native.const import Panel
 from inim.prime.native.firmware import FirmwareProfile, select_profile
 from inim.prime.native.helpers.partitions import (
@@ -29,7 +29,7 @@ from inim.prime.native.operations.zones.set_zone_bypass import set_zone_bypass
 from inim.prime.native.utils import Interval, make_intervals
 from inim.prime.native.wire.protocol import Protocol
 from inim.prime.native.wire.transport import Transport
-from models.arming_scenarios import ArmingScenario
+from inim.prime.native.models.arming_scenarios import ArmingScenario
 
 
 class NotInitializedError(RuntimeError):
