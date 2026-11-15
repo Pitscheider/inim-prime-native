@@ -34,6 +34,8 @@ Commands:
     set_zone_bypass               - Set bypass state for a zone
     set_output_status             - Set output state
     get_panel_info                - Print panel info
+    get_arming_scenarios
+    apply_arming_scenario
     
     exit / quit                   – Exit the program
 """
@@ -219,6 +221,27 @@ async def get_terminals(client: Client):
         else:
             print(terminal)
 
+async def get_arming_scenarios(client: Client):
+    await client.ensure_initialized()
+    await client.update_partitions()
+
+    partition_labels = {
+        partition_id: partition.label
+        for partition_id, partition in client.partitions.items()
+    }
+    active = client.active_arming_scenarios
+
+    for arming_scenario in client.arming_scenarios.values():
+        print(arming_scenario.to_string_partition_labels(partition_labels))
+        print(f"\tActive: {arming_scenario.arming_scenario_id in active}")
+    print()
+
+async def apply_arming_scenario(client: Client):
+    await client.ensure_initialized()
+    idx = int(input("Arming scenario ID: "))
+    await client.apply_arming_scenario(idx)
+    await get_partitions(client)
+
 # ---------------------------------------------------------------------------
 # REPL
 # ---------------------------------------------------------------------------
@@ -243,7 +266,7 @@ async def repl(config: Config) -> None:
         use_outer_frame = config.use_outer_frame,
         port = config.port,
         pin = config.pin,
-        logger = logger,
+        logger = None,
         firmware = None,
     ).connect()
 
@@ -316,6 +339,10 @@ async def repl(config: Config) -> None:
             await get_panel_info(client)
         elif choice == "get_terminals":
             await get_terminals(client)
+        elif choice == "get_arming_scenarios":
+            await get_arming_scenarios(client)
+        elif choice == "apply_arming_scenario":
+            await apply_arming_scenario(client)
 
         else:
             print(f"Unknown command '{choice}'. Type 'help' for a list of commands.")

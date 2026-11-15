@@ -17,6 +17,7 @@ class MemoryMap:
     zone_settings: int
     output_labels: int
     arming_scenario_labels: int
+    arming_scenario_settings: int
     output_scenario_labels: int | None  # None = not located yet on this firmware
 
 
@@ -40,12 +41,13 @@ FIRMWARE_4: Final[FirmwareProfile] = FirmwareProfile(
     name = "4.x",
     major_versions = frozenset({4}),
     memory = MemoryMap(
-        partition_labels       = 0x14030D20,
-        zone_labels            = 0x14030F00,
-        zone_settings          = 0x14073414,
-        output_labels          = 0x1403DEB0,
-        arming_scenario_labels = 0x1403D8E0,
-        output_scenario_labels = 0x1403F4C0,
+        partition_labels         = 0x14030D20,
+        zone_labels              = 0x14030F00,
+        zone_settings            = 0x14073414,
+        output_labels            = 0x1403DEB0,
+        arming_scenario_labels   = 0x1403D8E0,
+        arming_scenario_settings = 0x1407DFA8,
+        output_scenario_labels   = 0x1403F4C0,
     ),
     terminal_ids        = Interval(0, 1009),
     zone_terminal_ids   = Interval(0, 1004),
@@ -57,12 +59,13 @@ FIRMWARE_5: Final[FirmwareProfile] = FirmwareProfile(
     name = "5.x",
     major_versions = frozenset({5}),
     memory = MemoryMap(
-        partition_labels       = 0x14030D20,
-        zone_labels            = 0x14030F00,
-        zone_settings          = 0x1408B920,
-        output_labels          = 0x14041D30,
-        arming_scenario_labels = 0x14041760,
-        output_scenario_labels = None,
+        partition_labels         = 0x14030D20,
+        zone_labels              = 0x14030F00,
+        zone_settings            = 0x1408B920,
+        output_labels            = 0x14041D30,
+        arming_scenario_labels   = 0x14041760,
+        arming_scenario_settings = 0x14099368,
+        output_scenario_labels   = None,
     ),
     terminal_ids        = Interval(0, 1509),
     zone_terminal_ids   = Interval(0, 1504),

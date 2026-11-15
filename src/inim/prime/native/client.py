@@ -5,6 +5,7 @@ import logging
 from types import MappingProxyType
 from typing import Self
 
+from helpers.arming_scenarios import initialize_arming_scenarios
 from inim.prime.native.const import Panel
 from inim.prime.native.firmware import FirmwareProfile, select_profile
 from inim.prime.native.helpers.partitions import (
@@ -28,6 +29,7 @@ from inim.prime.native.operations.zones.set_zone_bypass import set_zone_bypass
 from inim.prime.native.utils import Interval, make_intervals
 from inim.prime.native.wire.protocol import Protocol
 from inim.prime.native.wire.transport import Transport
+from models.arming_scenarios import ArmingScenario
 
 
 class NotInitializedError(RuntimeError):
@@ -43,12 +45,15 @@ class Client:
     of the ``inim.prime.native`` package, exposing a single object that:
 
     * owns the TCP connection lifecycle,
-    * discovers terminals (zones, double-zones, outputs) and partitions,
+    * detects the panel firmware and selects the matching memory map,
+    * discovers terminals (zones, double-zones, outputs), partitions and
+      arming scenarios,
     * refreshes their status on demand,
-    * sends arm/disarm, zone bypass, output and alarm-memory-reset commands.
+    * sends arm/disarm, arming scenario, zone bypass, output and
+      alarm-memory-reset commands.
 
     Instances are meant to back something like a Home Assistant integration:
-    create one ``Client`` per panel, ``connect()`` + ``initialise()`` it once
+    create one ``Client`` per panel, ``connect()`` + ``initialize()`` it once
     (e.g. in a config entry setup), then let a polling coordinator call
     ``update_status()`` and the various command methods.
 
@@ -78,6 +83,7 @@ class Client:
         "_zone_terminals",
         "_zone_terminal_intervals",
         "_partitions",
+        "_arming_scenarios",
         "_serial_number",
         "_firmware",
         "_model",
@@ -149,6 +155,7 @@ class Client:
         self._zone_terminals: dict[int, ZoneTerminal] = {}
         self._zone_terminal_intervals: list[Interval] = []
         self._partitions: dict[int, Partition] = {}
+        self._arming_scenarios: dict[int, ArmingScenario] = {}
 
         self._serial_number: str | None = None
         self._firmware: str | None = None
@@ -199,14 +206,13 @@ class Client:
     ###
     async def initialize(self) -> None:
         """
-        Performs full panel discovery: reads panel info, terminals (zones,
-        double-zones, outputs) and partitions, and stores them on the client.
+        Performs full panel discovery: reads panel info, selects the firmware
+        profile, then reads terminals (zones, double-zones, outputs), partitions
+        and arming scenarios, and stores them on the client.
 
         Must be called (and awaited) once, after connect(), before using any
         of the status/command accessors below.
-
         """
-
         async with self._lock:
             serial_number, firmware, model = await get_panel_info(self._protocol)
 
@@ -247,6 +253,12 @@ class Client:
                 pin = self._pin,
             )
 
+            arming_scenarios = await initialize_arming_scenarios(
+                protocol = self._protocol,
+                profile = profile,
+            )
+
+
             zone_terminals: dict[int, ZoneTerminal] = {**single_zones, **double_zones}
 
             ### Intervals creation
@@ -274,6 +286,7 @@ class Client:
             self._zone_terminal_intervals = zone_terminal_intervals
             self._partitions = partitions
             self._profile = profile
+            self._arming_scenarios = arming_scenarios
             self._initialized = True
 
 
@@ -300,6 +313,9 @@ class Client:
     ### Updates
     ###
     async def update_status(self) -> None:
+        """Refreshes the status of all terminals and partitions.
+        Arming scenario activity is derived from the partition statuses,
+        so it is up to date after this call as well."""
         await self.update_terminals()
         await self.update_partitions()
 
@@ -433,6 +449,24 @@ class Client:
         """:return: All zone terminals, keyed by zone ID."""
         return MappingProxyType(self._zone_terminals)
 
+    @property
+    def arming_scenarios(self) -> MappingProxyType[int, ArmingScenario]:
+        """:return: Read-only view of the defined arming scenarios, keyed by arming scenario ID."""
+        return MappingProxyType(self._arming_scenarios)
+
+    @property
+    def active_arming_scenarios(self) -> MappingProxyType[int, ArmingScenario]:
+        """
+        :return: Arming scenarios whose targets all match the current partition
+                 arming statuses, keyed by arming scenario ID. Several can be
+                 active at once. Based on the last update_partitions().
+        """
+        return MappingProxyType({
+            arming_scenario_id: arming_scenario
+            for arming_scenario_id, arming_scenario in self._arming_scenarios.items()
+            if arming_scenario.is_active(self._partitions)
+        })
+
     def get_terminal(self, terminal_id: int) -> Terminal | None:
         return self._terminals.get(terminal_id)
 
@@ -451,6 +485,19 @@ class Client:
     def get_double_zone(self, terminal_id: int) -> DoubleZone | None:
         return self._double_zones.get(terminal_id)
 
+    def get_arming_scenario(self, arming_scenario_id: int) -> ArmingScenario | None:
+        return self._arming_scenarios.get(arming_scenario_id)
+
+    def is_arming_scenario_active(self, arming_scenario_id: int) -> bool:
+        """
+        :return: True if the arming scenario's targets all match the current
+                 partition arming statuses. Based on the last update_partitions().
+        :raises KeyError: If the arming scenario ID is unknown.
+        """
+        arming_scenario = self._arming_scenarios.get(arming_scenario_id)
+        if arming_scenario is None:
+            raise KeyError(f"Unknown arming scenario id: {arming_scenario_id}")
+        return arming_scenario.is_active(self._partitions)
 
     ###
     ### Set output
@@ -583,6 +630,30 @@ class Client:
         self._require_initialized()
         await self.reset_partition_memories(set(self._partitions))
 
+    ###
+    ### Apply arming scenario
+    ###
+    async def apply_arming_scenario(
+            self,
+            arming_scenario_id: int,
+    ) -> None:
+        """
+        Sets the arming scenario's target arming statuses in a single command.
+        Unchanged partitions are left as they are.
+
+        This reproduces the scenario's arming targets: it is not the panel's own
+        scenario activation (no 'Scenario' log event, no other programmed actions,
+        and the keypad's last-applied scenario is not updated).
+
+        :raises KeyError: If the arming scenario ID is unknown, or it targets a
+                          partition the client does not know.
+        """
+        self._require_initialized()
+        arming_scenario = self._arming_scenarios.get(arming_scenario_id)
+        if arming_scenario is None:
+            raise KeyError(f"Unknown arming scenario id: {arming_scenario_id}")
+
+        await self.set_partition_arming_statuses(arming_scenario.arming_scenario_setting.targets)
 
     # ------------------------------------------------------------------
     # Internal helpers
