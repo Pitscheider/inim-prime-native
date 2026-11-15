@@ -6,7 +6,7 @@ from inim.prime.native.models.partitions import ArmingStatus
 from inim.prime.native.operations.arming_scenarios.const import LAST_ARMING_SCENARIO_ID
 from inim.prime.native.utils import Interval
 from inim.prime.native.wire.protocol import Protocol
-from operations.partitions.const import PARTITIONS_NUMBER
+from inim.prime.native.operations.partitions.const import PARTITIONS_NUMBER
 
 ### Constants
 ARMING_SCENARIO_SETTING_SIZE: Final[int] = 19
